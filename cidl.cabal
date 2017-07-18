@@ -1,0 +1,78 @@
+name:                cidl
+version:             0.0.0.1
+license:             BSD3
+license-file:        LICENSE
+author:              Richard Marko
+maintainer:          srk@48.io
+copyright:           2017 Richard Marko
+build-type:          Simple
+cabal-version:       >=1.10
+
+data-files: support/elm/Utils.elm.template,
+            support/elm/elm-package.json.template,
+            support/elm/Makefile.template,
+            support/ivory/Unpack.hs.template,
+            support/ivory/CodeGen.hs.template,
+            support/ivory/Makefile.template,
+            support/tower/CodeGen.hs.template,
+            support/tower/Attr.hs.template,
+            support/tower/default.conf,
+            support/tower/Makefile.template,
+            support/rpc/Base.hs.template,
+            support/rpc/Makefile
+
+library
+  exposed-modules:     Cidl,
+                       Cidl.Parse,
+                       Cidl.Interface,
+                       Cidl.Interface.AST,
+                       Cidl.Schema,
+                       Cidl.Types,
+                       Cidl.Types.AST,
+                       Cidl.Types.Base,
+                       Cidl.Backend.Cabal,
+                       Cidl.Backend.Elm,
+                       Cidl.Backend.Elm.Common,
+                       Cidl.Backend.Elm.Interface,
+                       Cidl.Backend.Elm.Type,
+                       Cidl.Backend.Haskell,
+                       Cidl.Backend.Haskell.Interface,
+                       Cidl.Backend.Haskell.Test,
+                       Cidl.Backend.Haskell.Types,
+                       Cidl.Backend.Ivory,
+                       Cidl.Backend.Ivory.Schema,
+                       Cidl.Backend.Ivory.Test,
+                       Cidl.Backend.Ivory.Types,
+                       Cidl.Backend.Rpc,
+                       Cidl.Backend.Tower,
+                       Cidl.Backend.Tower.Schema,
+                       Cidl.Backend.Tower.Server
+
+  other-modules:       Paths_cidl
+
+  build-depends:       base >=4.7 && <5,
+                       base-compat >= 0.6,
+                       hashable,
+                       mainland-pretty,
+                       parsec,
+                       pretty-show,
+                       transformers,
+                       ivory-artifact,
+                       s-cargot,
+                       text,
+                       mtl,
+                       filepath,
+                       directory
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+
+executable             cidl
+  main-is:             Main.hs
+  hs-source-dirs:      executables
+  build-depends:       base >= 4.6,
+                       ivory-artifact,
+                       cidl
+
+  default-language:    Haskell2010
+  ghc-options:         -Wall

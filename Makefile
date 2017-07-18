@@ -14,69 +14,69 @@ test: rpc-backend-test
 test: elm-backend-test
 
 haskell-backend-test: default
-	stack exec -- gidl -b haskell \
+	stack exec -- cidl -b haskell \
 			   --debug \
-			   -i tests/example.gidl \
-			   -o tests/gidl-haskell-backend-test \
-			   -p gidl-haskell-backend-test \
-			   -n Gidl.Haskell.Test
-	make -C tests/gidl-haskell-backend-test test
+			   -i tests/example.cidl \
+			   -o tests/cidl-haskell-backend-test \
+			   -p cidl-haskell-backend-test \
+			   -n Cidl.Haskell.Test
+	make -C tests/cidl-haskell-backend-test test
 
 haskell-backend-test-clean:
-	-rm -rf tests/gidl-haskell-backend-test
+	-rm -rf tests/cidl-haskell-backend-test
 
 ivory-backend-test: default
-	stack exec -- gidl -b ivory \
+	stack exec -- cidl -b ivory \
 			   --debug \
-			   -i tests/example.gidl \
-			   -o tests/gidl-ivory-backend-test \
-			   -p gidl-ivory-backend-test \
-			   -n Gidl.Ivory.Test \
+			   -i tests/example.cidl \
+			   -o tests/cidl-ivory-backend-test \
+			   -p cidl-ivory-backend-test \
+			   -n Cidl.Ivory.Test \
 			   --ivory-repo=$(IVORY_REPO)
-	make -C tests/gidl-ivory-backend-test test
+	make -C tests/cidl-ivory-backend-test test
 
 ivory-backend-test-clean:
-	-rm -rf tests/gidl-ivory-backend-test
+	-rm -rf tests/cidl-ivory-backend-test
 
 tower-backend-test: default
-	stack exec -- gidl -b tower \
+	stack exec -- cidl -b tower \
 			   --debug \
-			   -i tests/example.gidl \
-			   -o tests/gidl-tower-backend-test \
-			   -p gidl-tower-backend-test \
-			   -n Gidl.Test \
+			   -i tests/example.cidl \
+			   -o tests/cidl-tower-backend-test \
+			   -p cidl-tower-backend-test \
+			   -n Cidl.Test \
 			   --ivory-repo=$(IVORY_REPO) \
 			   --tower-repo=$(TOWER_REPO) \
 			   --ivory-tower-stm32-repo=$(IVORY_TOWER_STM32_REPO)
-	make -C tests/gidl-tower-backend-test test
+	make -C tests/cidl-tower-backend-test test
 
 tower-backend-test-clean:
-	-rm -rf tests/gidl-tower-backend-test
+	-rm -rf tests/cidl-tower-backend-test
 
 rpc-backend-test: default
-	stack exec -- gidl -b haskell-rpc \
+	stack exec -- cidl -b haskell-rpc \
 			   --debug \
-			   -i tests/example.gidl \
-			   -o tests/gidl-rpc-backend-test \
-			   -p gidl-rpc-backend-test \
-			   -n Gidl.Test
-	make -C tests/gidl-rpc-backend-test
-	#make -C tests/gidl-rpc-backend-test test
+			   -i tests/example.cidl \
+			   -o tests/cidl-rpc-backend-test \
+			   -p cidl-rpc-backend-test \
+			   -n Cidl.Test
+	make -C tests/cidl-rpc-backend-test
+	#make -C tests/cidl-rpc-backend-test test
 
 rpc-backend-test-clean:
-	-rm -rf tests/gidl-rpc-backend-test
+	-rm -rf tests/cidl-rpc-backend-test
 
 elm-backend-test: default
-	stack exec -- gidl -b elm \
+	stack exec -- cidl -b elm \
 			   --debug \
-			   -i tests/example.gidl \
-			   -o tests/gidl-elm-backend-test \
-			   -p gidl-elm-backend-test \
-			   -n Gidl.Test
-	make -C tests/gidl-elm-backend-test
+			   -i tests/example.cidl \
+			   -o tests/cidl-elm-backend-test \
+			   -p cidl-elm-backend-test \
+			   -n Cidl.Test
+	make -C tests/cidl-elm-backend-test
 
 elm-backend-test-clean:
-	-rm -rf tests/gidl-elm-backend-test
+	-rm -rf tests/cidl-elm-backend-test
 
 clean: ivory-backend-test-clean
 clean: tower-backend-test-clean

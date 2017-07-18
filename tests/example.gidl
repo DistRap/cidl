@@ -1,5 +1,5 @@
 
--- An example gidl IDL.
+-- An example cidl IDL.
 -- Line comments are haskell style.
 {- Block comments are haskell style, as well. -}
 
@@ -7,7 +7,7 @@
 -- Type language
 -------------------------------------------------------------------------------
 
--- All types end with a _t suffix in gidl syntax. Code generators may elect to
+-- All types end with a _t suffix in cidl syntax. Code generators may elect to
 -- drop the _t suffix when generating type definitions.
 
 -- Newtype definitions create a distinct type by wrapping an existing atomic,

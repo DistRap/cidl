@@ -2,22 +2,22 @@ module Main where
 
 import Ivory.Artifact
 import Control.Monad
-import Gidl.Types
-import Gidl.Interface
-import Gidl.Parse
-import Gidl.Schema
-import Gidl.Backend.Cabal
-import Gidl.Backend.Haskell.Types
-import Gidl.Backend.Haskell.Interface
-import Gidl.Backend.Haskell
+import Cidl.Types
+import Cidl.Interface
+import Cidl.Parse
+import Cidl.Schema
+import Cidl.Backend.Cabal
+import Cidl.Backend.Haskell.Types
+import Cidl.Backend.Haskell.Interface
+import Cidl.Backend.Haskell
 
 main :: IO ()
 main = do
   test "tests/testtypes.sexpr"
   runHaskellBackend "tests/testtypes.sexpr"
-                    "gidl-haskell-backend-test"
-                    (words "Gidl Haskell Test")
-                    "tests/gidl-haskell-backend-test"
+                    "cidl-haskell-backend-test"
+                    (words "Cidl Haskell Test")
+                    "tests/cidl-haskell-backend-test"
 
 
 test :: FilePath -> IO ()

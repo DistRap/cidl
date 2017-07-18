@@ -1,6 +1,6 @@
 module Main where
 
-import Gidl (run)
+import Cidl (run)
 
 main :: IO ()
 main = run

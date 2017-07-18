@@ -1,8 +1,8 @@
 {
     "version": "1.0.0",
-    "summary": "Gidl bindings for $package_name$",
+    "summary": "Cidl bindings for $package_name$",
     "license": "",
-    "repository": "https://github.com/GaloisInc/gidl.git",
+    "repository": "https://github.com/GaloisInc/cidl.git",
     "source-directories": [
         "src"
     ],
