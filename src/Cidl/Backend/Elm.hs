@@ -12,9 +12,9 @@ import qualified Paths_cidl as P
 import Data.List (nub)
 
 import Cidl.Backend.Elm.Common
-import Cidl.Backend.Elm.Interface
+import Cidl.Backend.Elm.Dict
 import Cidl.Backend.Elm.Type
-import Cidl.Interface (Interface)
+import Cidl.Dict (Dict)
 import Cidl.Types (childTypes)
 
 import Ivory.Artifact (Artifact,artifactPath)
@@ -22,8 +22,8 @@ import Ivory.Artifact.Template (artifactCabalFileTemplate)
 
 import System.FilePath (pathSeparator)
 
-elmBackend :: [Interface] -> String -> String -> [Artifact]
-elmBackend iis pkgName nsStr =
+elmBackend :: [Dict] -> String -> String -> [Artifact]
+elmBackend d pkgName nsStr =
       elmMakefile nsStr
     : elmPackageJson pkgName
     : map (artifactPath "src") sourceMods

@@ -4,26 +4,24 @@ import Ivory.Artifact
 import Ivory.Artifact.Template
 
 import Data.Char (isSpace)
-import Data.List (intercalate, nub)
+import Data.List (intercalate)
 import Text.PrettyPrint.Mainland
 
 import qualified Paths_cidl as P
 
-import Cidl.Interface
-import Cidl.Schema
+import Cidl.Dict
 import Cidl.Backend.Cabal
 import Cidl.Backend.Ivory.Types
-import Cidl.Backend.Ivory.Schema
 
-ivoryBackend :: FilePath -> [Interface] -> String -> String -> [Artifact]
-ivoryBackend ivoryRepo iis pkgname namespace_raw =
+ivoryBackend :: FilePath -> [Dict] -> String -> String -> [Artifact]
+ivoryBackend ivoryRepo dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
   , stackfile ivoryRepo
   , artifactPath "tests" $ codegenTest namespace
   ] ++ map (artifactPath "src") sources
   where
-  sources = ivorySources iis namespace
+  sources = ivorySources dicts namespace
   namespace = dotwords namespace_raw
 
   cf = (defaultCabalFile pkgname cabalmods ivoryDeps) { tests = [ cg_test ] }
@@ -44,18 +42,13 @@ ivoryTestDeps =
   [ "ivory-backend-c"
   ]
 
-ivorySources :: [Interface] -> [String] -> [Artifact]
-ivorySources iis namespace =
-  tmods ++ concat smods ++ [ typeUmbrella namespace userDefinedTypes
-                           , unpackModule namespace
-                           ]
+ivorySources :: [Dict] -> [String] -> [Artifact]
+ivorySources dicts namespace =
+  tmods ++ [ typeUmbrella namespace userDefinedTypes ]
   where
-  userDefinedTypes = nub [ t | i <- iis, t <- interfaceTypes i, isUserDefined t ]
+  userDefinedTypes = [ t | d <- dicts, t <- allTypes d, isUserDefined t ]
   tmods = [ typeModule (namespace ++ ["Types"]) t
           | t <- userDefinedTypes ]
-  smods = [ [ schemaModule (namespace ++ ["Interface"]) i (producerSchema i)
-            , schemaModule (namespace ++ ["Interface"]) i (consumerSchema i) ]
-          | i <- iis ]
 
 dotwords :: String -> [String]
 dotwords s = case dropWhile isDot s of
@@ -71,7 +64,7 @@ makefile =
 stackfile :: FilePath -> Artifact
 stackfile ivory = artifactText "stack.yaml" $
   prettyLazyText 1000 $ stack
-    [ text "resolver: lts-6.10"
+    [ text "resolver: lts-9.1"
     , empty
     , text "packages:"
     , text "- '.'"
@@ -103,11 +96,3 @@ codegenTest modulepath =
     [("module_path", intercalate "." modulepath )]
   where
   fname = "support/ivory/CodeGen.hs.template"
-
-unpackModule :: [String] -> Artifact
-unpackModule modulepath =
-  artifactPath (intercalate "/" modulepath) $
-  artifactCabalFileTemplate P.getDataDir fname
-    [("module_path", intercalate "." modulepath )]
-  where
-  fname = "support/ivory/Unpack.hs.template"

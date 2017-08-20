@@ -16,12 +16,12 @@ import System.FilePath
 import Text.Show.Pretty
 
 import Ivory.Artifact
-import Cidl.Parse
-import Cidl.Interface
-import Cidl.Backend.Elm (elmBackend)
+--import Cidl.Parse
+import Cidl.Monad
+--import Cidl.Backend.Elm (elmBackend)
 import Cidl.Backend.Haskell
 import Cidl.Backend.Ivory
-import Cidl.Backend.Rpc (rpcBackend)
+--import Cidl.Backend.Rpc (rpcBackend)
 import Cidl.Backend.Tower
 
 data OptParser opt = OptParser [String] (opt -> opt)
@@ -47,13 +47,12 @@ data Backend
   = HaskellBackend
   | IvoryBackend
   | TowerBackend
-  | RpcBackend
-  | ElmBackend
+--  | RpcBackend
+--  | ElmBackend
   deriving (Eq, Show)
 
 data Opts = Opts
   { backend             :: Backend
-  , idlpath             :: FilePath
   , outpath             :: FilePath
   , ivoryrepo           :: FilePath
   , towerrepo           :: FilePath
@@ -67,7 +66,6 @@ data Opts = Opts
 initialOpts :: Opts
 initialOpts = Opts
   { backend             = error (usage ["must specify a backend"])
-  , idlpath             = error (usage ["must specify an idl file"])
   , outpath             = error (usage ["must specify an output path"])
   , ivoryrepo           = "ivory"
   , towerrepo           = "tower"
@@ -83,14 +81,11 @@ setBackend b = case map toUpper b of
   "HASKELL"     -> success (\o -> o { backend = HaskellBackend })
   "IVORY"       -> success (\o -> o { backend = IvoryBackend })
   "TOWER"       -> success (\o -> o { backend = TowerBackend })
-  "HASKELL-RPC" -> success (\o -> o { backend = RpcBackend })
-  "ELM"         -> success (\o -> o { backend = ElmBackend })
+--  "HASKELL-RPC" -> success (\o -> o { backend = RpcBackend })
+--  "ELM"         -> success (\o -> o { backend = ElmBackend })
   _             -> invalid e
   where e = "\"" ++ b ++ "\" is not a valid backend.\n"
           ++ "Supported backends: haskell, ivory, tower, haskell-rpc"
-
-setIdlPath :: String -> OptParser Opts
-setIdlPath p = success (\o -> o { idlpath = p })
 
 setOutPath :: String -> OptParser Opts
 setOutPath p = success (\o -> o { outpath = p })
@@ -120,8 +115,6 @@ options :: [OptDescr (OptParser Opts)]
 options =
   [ Option "b" ["backend"]   (ReqArg setBackend "BACKEND")
       "code generator backend"
-  , Option "i" ["idl"]       (ReqArg setIdlPath "FILE")
-      "IDL file"
   , Option "o" ["out"]       (ReqArg setOutPath "DIR")
       "root directory for output"
   , Option []  ["ivory-repo"] (ReqArg setIvoryRepo "REPO")
@@ -158,41 +151,34 @@ run :: IO ()
 run = do
   args <- getArgs
   opts <- parseOpts args
-  idl <- readFile (idlpath opts)
-  case parseDecls idl of
-    Left e -> putStrLn ("Error parsing " ++ (idlpath opts) ++ ": " ++ e)
-              >> exitFailure
-    Right (te, ie) -> do
-      when (debug opts) $ do
-        putStrLn (ppShow te)
-        putStrLn (ppShow ie)
-      let InterfaceEnv ie' = ie
-          interfaces = map snd ie'
-          absolutize p name = do
-            pAbs <- fmap normalise $
-                      if isRelative p
-                      then fmap (</> p) getCurrentDirectory
-                      else return p
-            ex <- doesDirectoryExist pAbs
-            when (not ex) $
-              error (usage [ "Directory \"" ++ p ++ "\" does not exist."
-                           , "Make sure that the " ++ name
-                             ++ " repository is checked out." ])
-            return pAbs
-      b <- case backend opts of
-             HaskellBackend -> return haskellBackend
-             IvoryBackend -> do
-               ivoryAbs <- absolutize (ivoryrepo opts) "Ivory"
-               return (ivoryBackend ivoryAbs)
-             TowerBackend -> do
-               ivoryAbs           <- absolutize (ivoryrepo opts) "Ivory"
-               towerAbs           <- absolutize (towerrepo opts) "Tower"
-               ivoryTowerSTM32Abs <- absolutize (ivorytowerstm32repo opts)
-                                                "ivory-tower-stm32"
-               return (towerBackend ivoryAbs towerAbs ivoryTowerSTM32Abs)
-             RpcBackend -> return rpcBackend
-             ElmBackend -> return elmBackend
-      artifactBackend opts (b interfaces (packagename opts) (namespace opts))
+  let dicts = interfaces
+  when (debug opts) $ do
+    putStrLn (ppShow dicts)
+  let absolutize p name = do
+        pAbs <- fmap normalise $
+                  if isRelative p
+                  then fmap (</> p) getCurrentDirectory
+                  else return p
+        ex <- doesDirectoryExist pAbs
+        when (not ex) $
+          error (usage [ "Directory \"" ++ p ++ "\" does not exist."
+                       , "Make sure that the " ++ name
+                         ++ " repository is checked out." ])
+        return pAbs
+  b <- case backend opts of
+         HaskellBackend -> return haskellBackend
+         IvoryBackend -> do
+           ivoryAbs <- absolutize (ivoryrepo opts) "Ivory"
+           return (ivoryBackend ivoryAbs)
+         TowerBackend -> do
+           ivoryAbs           <- absolutize (ivoryrepo opts) "Ivory"
+           towerAbs           <- absolutize (towerrepo opts) "Tower"
+           ivoryTowerSTM32Abs <- absolutize (ivorytowerstm32repo opts)
+                                            "ivory-tower-stm32"
+           return (towerBackend ivoryAbs towerAbs ivoryTowerSTM32Abs)
+--         RpcBackend -> return rpcBackend
+--         ElmBackend -> return elmBackend
+  artifactBackend opts (b dicts (packagename opts) (namespace opts))
 
   where
   artifactBackend :: Opts -> [Artifact] -> IO ()

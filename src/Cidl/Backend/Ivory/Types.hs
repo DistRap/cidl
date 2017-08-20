@@ -7,6 +7,8 @@ import Data.Char (toUpper, toLower)
 import Cidl.Types
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
+import Lens.Family2
 
 typeUmbrella :: [String] -> [Type] -> Artifact
 typeUmbrella modulepath ts =
@@ -14,7 +16,8 @@ typeUmbrella modulepath ts =
   artifactText ("Types.hs") $
   prettyLazyText 1000 $
   stack
-    [ text "module" <+> typeModulePath modulepath "Types" <+> text "where"
+    [ text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
+    , text "module" <+> typeModulePath modulepath "Types" <+> text "where"
     , empty
     , text "import Ivory.Language"
     , stack
@@ -28,10 +31,15 @@ typeUmbrella modulepath ts =
           <> text (userEnumValueName tname) <> text "TypesModule"
         | t <- ts
         , let tname = typeModuleName t
+        , notArray t
         ]
     ]
 
--- invariant: only make a typeModule from a StructType, Newtype, or EnumType
+notArray :: Type -> Bool
+notArray (ArrayType _ _ _) = False
+notArray _ = True
+
+-- invariant: only make a typeModule from a RecordType, ArrayType, Newtype, or EnumType
 -- i.e. when isUserDefined is true.
 typeModule :: [String] -> Type -> Artifact
 typeModule modulepath t =
@@ -52,7 +60,7 @@ typeModule modulepath t =
     , empty
     , stack (imports ++
               [ text "import Ivory.Language"
-              , text "import Ivory.Serialize"
+              , emptyWhen (isArray t) (text "import Ivory.Serialize")
               ])
     , empty
     , typeDecl t
@@ -82,8 +90,12 @@ data SyntaxContext = Concrete | Embedded deriving Show
 typeIvoryArea :: SyntaxContext -> Type -> Doc
 typeIvoryArea sc t =
   case t of
-    StructType _ _ ->
+    RecordType _ _ ->
       parens (text (typeIvoryType t))
+    VarArrayType t' ->
+      parens (text (typeIvoryType t'))
+    ArrayType _ _ _ ->
+      parens (text (typeIvoryType t) <> text "." <> text (typeIvoryType t))
     PrimType (AtomType _) ->
       parens (text stored <+> text (typeIvoryType t))
     PrimType (EnumType "bool_t" _ _) ->
@@ -96,11 +108,13 @@ typeIvoryArea sc t =
       Embedded -> "'Stored"
 
 typeIvoryAreaStructQQ :: Type -> Doc
-typeIvoryAreaStructQQ (StructType n _) = text "Struct" <+> text (userTypeStructName n)
+typeIvoryAreaStructQQ (RecordType n _) = text "Struct" <+> text (userTypeStructName n)
 typeIvoryAreaStructQQ t = typeIvoryArea Concrete t
 
 typeIvoryType :: Type -> String
-typeIvoryType (StructType tn _) = "'Struct \"" ++ userTypeStructName tn ++ "\""
+typeIvoryType (RecordType tn _) = "'Struct \"" ++ userTypeStructName tn ++ "\""
+typeIvoryType (ArrayType tn _ _) = userTypeModuleName tn
+typeIvoryType (VarArrayType t) = typeIvoryType t
 typeIvoryType (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeIvoryType (PrimType (EnumType "bool_t" _ _)) = "IBool"
 typeIvoryType (PrimType (EnumType tn _ _)) = userTypeModuleName tn
@@ -117,7 +131,9 @@ typeIvoryType (PrimType (AtomType a)) = case a of
   AtomDouble -> "IDouble"
 
 typeModuleName :: Type -> String
-typeModuleName (StructType tn _) = userTypeModuleName tn
+typeModuleName (RecordType tn _) = userTypeModuleName tn
+typeModuleName (ArrayType tn _ _ ) = userTypeModuleName tn
+typeModuleName (VarArrayType t) = typeModuleName t
 typeModuleName (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeModuleName (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeModuleName (PrimType (AtomType _)) = error "do not take typeModuleName of an AtomType"
@@ -149,7 +165,7 @@ userTypeStructName = first_lower . drop_t_suffix
   drop_t_suffix (a:as) = a : drop_t_suffix as
 
 ivoryPackageName :: Type -> String
-ivoryPackageName (StructType tname _) = userEnumValueName tname ++ "TypesModule"
+ivoryPackageName (RecordType tname _) = userEnumValueName tname ++ "TypesModule"
 ivoryPackageName (PrimType (Newtype tname _)) = userEnumValueName tname ++ "TypesModule"
 ivoryPackageName (PrimType (EnumType tname _ _)) = userEnumValueName tname ++ "TypesModule"
 ivoryPackageName _ = error "can't take ivoryPackageName of builtin type"
@@ -158,20 +174,20 @@ qualifiedIvoryPackageName t = typeModuleName t ++ "." ++ ivoryPackageName t
 
 
 typeDecl :: Type -> Doc
-typeDecl t@(StructType tname ss) = stack
+typeDecl t@(RecordType tname es) = stack
   [ text "[ivory|"
   , text "struct" <+> structname
   , indent 2 $ encloseStack lbrace rbrace semi
-      [ text i <+> colon <> colon
-       <+> typeIvoryAreaStructQQ st
-      | (i,st) <- ss ]
+      [ text (e ^. name) <+> colon <> colon
+       <+> typeIvoryAreaStructQQ (e ^. typ)
+      | e <- es ]
   , text "|]"
   , empty
   , packRep <+> colon <> colon <+> text "WrappedPackRep" <+> storedType
   , packRep <+> equals <+> text "wrapPackRep" <+> dquotes structname <+> text "$"
   , indent 2 $ text "packStruct" <+> encloseStack lbracket rbracket comma
-                [ text "packLabel" <+> text i
-                | (i,_) <- ss]
+                [ text "packLabel" <+> text (e ^. name)
+                | e <- es]
   , empty
   , text "instance Packable" <+> storedType <+> text "where"
   , indent 2 $ text "packRep" <+> equals <+> text "wrappedPackRep" <+> packRep
@@ -188,6 +204,7 @@ typeDecl t@(StructType tname ss) = stack
       [ text "depend" <+> text (qualifiedIvoryPackageName dt)
       | dt <- typeLeaves t
       , isUserDefined dt
+      , notArray dt
       ]
 
   ]
@@ -195,6 +212,18 @@ typeDecl t@(StructType tname ss) = stack
   storedType = parens (text "'Struct" <+> dquotes structname)
   structname = text (userTypeStructName tname)
   packRep = text "pack" <> text (userTypeModuleName tname)
+
+typeDecl (VarArrayType t) = typeDecl t
+typeDecl (ArrayType tname len t) =
+      text "type"
+  <+> text typename
+  <+> equals
+  <+> text "'Array"
+  <+> integer len
+  <+> storedType (typeImportedIvoryType t)
+  where
+  typename = userTypeModuleName tname
+  storedType name = parens (text "'Stored" <+> text name)
 
 typeDecl t@(PrimType (Newtype tname n)) = stack
   [ text "newtype" <+> text typename <+> equals
@@ -284,7 +313,9 @@ data ImportType = LibraryType String
                 deriving (Eq, Show)
 
 importType :: Type -> ImportType
-importType (StructType n _) = UserType n
+importType (RecordType n _) = UserType n
+importType (ArrayType n _ _) = UserType n
+importType (VarArrayType t) = importType t
 importType (PrimType (EnumType "bool_t" _ _)) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n
@@ -314,3 +345,10 @@ encloseStack l r p ds = case ds of
   [d] -> align (l <+> d </> r)
   _ -> align (l <+> (folddoc (\a b -> a </> p <+> b) ds) </> r)
 
+onlyWhen :: Bool -> Doc -> Doc
+onlyWhen True d = d
+onlyWhen _ _ = empty
+
+emptyWhen :: Bool -> Doc -> Doc
+emptyWhen True _ = empty
+emptyWhen _ d = d

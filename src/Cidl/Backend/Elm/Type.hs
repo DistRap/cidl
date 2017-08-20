@@ -5,12 +5,13 @@ import Data.List (intercalate,nub)
 
 import Cidl.Backend.Elm.Common
 
-import Cidl.Types (Type(..),PrimType(..),typeLeaves)
+import Cidl.Types --(Type(..),PrimType(..),typeLeaves)
 
 import Ivory.Artifact
     (Artifact,artifactPath,artifactText)
 
 import Text.PrettyPrint.Mainland
+import Lens.Family2
 
 -- | Produce an Elm module for a 'Type'
 typeModule :: Namespace -> Type -> Artifact
@@ -38,12 +39,12 @@ typeModule ns t =
 -- | Produce the body of the module for a 'Type' differently depending
 -- on whether it's a struct, enum, or newtype
 typeDecl :: ModulePath -> Type -> Doc
-typeDecl mp t@(StructType _ ss) = stack
+typeDecl mp t@(RecordType _ es) = stack
   [ -- the type definition itself
     "type alias" <+> tname <+> equals
   , indent 2 $ encloseStack lbrace rbrace comma
-      [ text i <+> colon <+> elmTypeQName mp st
-      | (i,st) <- ss ]
+      [ text (e ^. name) <+> colon <+> elmTypeQName mp (e ^. typ)
+      | e <- es ]
   , empty
     -- JSON encoder
   , "encode" <+> colon <+> tname <+> "->" <+> "Json.Encode.Value"
@@ -51,25 +52,25 @@ typeDecl mp t@(StructType _ ss) = stack
   , indent 2 $ stack
       [ "Json.Encode.object"
       , indent 2 $ encloseStack lbracket rbracket comma
-        [ parens (dquotes (text i)
-            <> comma <+> typeEncoder mp st <+> "x" <> dot <> (text i))
-        | (i,st) <- ss ]
+        [ parens (dquotes (text (e ^. name))
+            <> comma <+> typeEncoder mp (e ^. typ) <+> "x" <> dot <> (text (e ^. name)))
+        | e <- es ]
       ]
   , empty
     -- JSON decoder
   , "decode" <+> colon <+> "Json.Decode.Decoder" <+> tname
   , "decode" <+> equals <+> "Json.Decode.Pipeline.decode" <+> tname
   , indent 2 $ stack $
-      [ "|>" <+> parens ("required" <+> dquotes (text i) <+> typeDecoder mp st)
-      | (i,st) <- ss ]
+      [ "|>" <+> parens ("required" <+> dquotes (text (e ^. name)) <+> typeDecoder mp (e ^. typ))
+      | e <- es ]
   , empty
     -- arbitrary "initialized" value
   , "{-|" <+> tname <+> "initialized with (arbitrary) default values -}"
   , "init" <+> colon <+> tname
   , "init" <+> equals
   , indent 2 $ encloseStack lbrace rbrace comma
-      [ text i <+> equals <+> typeInit mp st
-      | (i,st) <- ss ]
+      [ text (e ^. name) <+> equals <+> typeInit mp (e ^. typ)
+      | e <- es ]
   ]
   where
   tname = text (cappedName t)

@@ -1,13 +1,11 @@
 # Cidl
 
-![TravisCI](https://travis-ci.org/GaloisInc/cidl.svg)
+Cidl (for CANOpen Interface Description Language) is a simple IDL for
+describing CANOpen dictionaries.
 
-Cidl (for Galois Interface Description Language) is a simple IDL for
-describing structured types and RPC-style interfaces.
+This is designed to be used in conjunction with [ivory-tower-canopen][].
 
-## Overview
-
-[Jump right to an example of cidl.](https://github.com/galoisinc/cidl/tree/master/tests/example.cidl)
+[ivory-tower-canopen]: https://github.com/distrap/ivory-tower-canopen
 
 ### Types
 
@@ -24,51 +22,9 @@ the following primitives:
     - User specified representation width (8, 16, 32, or 64 bits)
 - User-defined Newtypes:
     - Wraps an existing atomic or enum type with a new type
-- User-defined Structures:
+- User-defined Records:
     - Set of named fields. Corresponds to a record or a C struct.
     - Fields may be of any other user-defined type
-
-Cidl does not have any sort of sum types (tagged unions) because the Ivory
-language does not have support for sum types.
-
-### Interfaces
-
-Cidl interfaces are composed of the following primitives:
-- Attributes, which are read and written according to requests by the client.
-  Attributes have a user defined read/writable permissions.
-- Streams, which are sent from server to client whenever the server wants.
-  Streams were never really thought through all the way, and no Cidl
-  implementation is expected to handle streams. They're still here because we
-  have not made time to remove them.
-
-Interfaces can be composed by subtyping. We regret this choice and should have
-known better. We would find a better way to compose interfaces if resources
-permitted.
-
-Protocol drift is detected by identifying each stream and attribute message
-on the wire by a hash of its name, its type, and all child types.
-
-## IDL format
-
-The cidl IDL uses a s-expression based format. The IDL format currently is
-documented in `tests/example.cidl`
-
-## Backends
-
-Cidl currently has backends for:
-  - Haskell backend: translates types to algebraic datatypes, creates `cereal`
-    instances for serialization.
-  - Haskell-RPC backend: all of the features of the Haskell backend, and also
-    creates an HTTP server that exposes a JSON RPC-style interface for cidl
-    interfaces.
-  - [Ivory][] backend: translates types to Ivory types, creates `ivory-serialize`
-    instances for serialization.
-  - [Tower][] backend: all of the features of the Ivory backend, and also
-    creates datatypes of tower channels for interface streams and attributes,
-    and a tower monitor which implements a server for a given interface.
-
-[Ivory]: http://github.com/GaloisInc/ivory
-[Tower]: http://github.com/GaloisInc/tower
 
 ## Prerequisites
 
@@ -82,7 +38,7 @@ require the [Ivory][], [Tower][], and [ivory-tower-stm32][] repositories. These
 should also be found, by default, in the parent directory, but
 alternate locations can be specified when running Cidl.
 
-[ivory-tower-stm32]: http://github.com/GaloisInc/ivory-tower-stm32
+[ivory-tower-stm32]: https://github.com/GaloisInc/ivory-tower-stm32
 
 ```
 git clone https://github.com/galoisinc/ivory
@@ -93,61 +49,24 @@ git clone https://github.com/galoisinc/ivory-tower-stm32
 ## Build and Test
 
 The `stack.yaml` file assumes you have checked out this repository as
-a submodule of [`smaccmpilot-build`][smaccmpilot-build]. For a
+a submodule of [`distrap-build`][distrap-build]. For a
 standalone build, edit the relative paths for the prerequisite
 packages in `stack.yaml`.
 
-[smaccmpilot-build]: http://github.com/GaloisInc/smaccmpilot-build
+[distrap-build]: https://github.com/distrap/distrap-build
 
 The default target builds the cidl library. You can then use `stack
 exec cidl -- <OPTIONS>` to run the code generator. Use the `--help`
 option to get usage information.
 
-Use the `test` target in the Makefile to generate and test each backend
-implementation. The `tests/example.cidl` file is used as the input language.
-You may then browse generated code for each implementation, which is generated
-and built in subdirectories of the `tests` directory.
-
-## Editor Modes
-
-#### vim
-There is a vim-mode available at [`pchickey/vim-cidl`](https://github.com/pchickey/vim-cidl).
-
-If you use the vundle package manager, add the line `Package 'pchickey/vim-cidl'`
-to your `.vimrc`, then run `:BundleInstall`.
-
-If you use the Pathogen package manager, clone the `vim-cidl` repo into your
-`~/.vim/bundle` directory.
-
-#### emacs
-There is an emacs-mode available at [`aisamanra/cidl-mode`](https://github.com/aisamanra/cidl-mode)
-and through an elisp archive at [`http://gelpa.gdritter.com`](http://gelpa.gdritter.com).
-
-If an emacs user uses the emacs package manager, they can just add a line to
-their `.emacs` and then install it either interactively with `M-x package-list`
-or automatically with `(use-package cidl-mode :ensure t)`
-
 ## About
 
-Cidl was created at [Galois][] by Pat Hickey, with help from Getty Ritter and
+Cidl was created for [DistRap][] project by Richard Marko.
+
+Cidl was inspired by [Gidl][] by Pat Hickey, with help from Getty Ritter and
 Trevor Elliott, as part of the [SMACCMPilot project][].
 
-Cidl was inspired in part by John Van Enk's excellent [Cauterize][] tools. If
-engineering resources and time had permitted, we would have added unions to the
-Ivory language, so that we could make a Cauterize backend for Ivory. Instead, we
-got Cidl.
-
-If you find yourself making serious use of Cidl, please get in touch so we may
-apologize for its many shortcomings, and recommend that you use Cauterize
-instead.
-
-[Galois]: https://galois.com
+[DistRap]: https://galois.com
+[Gidl]: https://github.com/galoisinc/gidl
 [SMACCMPilot project]: https://smaccmpilot.org
 [Cauterize]: https://github.com/cauterize-tools/cauterize
-
-## Contributing
-
-This project adheres to the
-[Contributor Covenant code of conduct](CODE_OF_CONDUCT.md).
-By participating, you are expected to uphold this code. Please report unaccpetable
-behavior to [smaccm@galois.com](mailto:smaccm@galois.com).

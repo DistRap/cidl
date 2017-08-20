@@ -10,6 +10,7 @@ module Cidl.Types
   , typeName
   ) where
 
+import Lens.Family2
 import Data.Tuple (swap)
 import Data.List (nub)
 import Cidl.Types.AST
@@ -26,7 +27,9 @@ lookupTypeName tn te =
   aux (TypeEnv e) = lookup tn e
 
 typeName :: Type -> TypeName
-typeName (StructType n _) = n
+typeName (RecordType n _) = n
+typeName (ArrayType n _ _) = n
+typeName (VarArrayType t) = typeName t
 typeName (PrimType (EnumType n _ _)) = n
 typeName (PrimType (Newtype n _)) = n
 typeName t@(PrimType (AtomType _)) =
@@ -41,7 +44,9 @@ insertType tn t e@(TypeEnv te) = case lookupTypeName tn e of
   Just _ -> error ("insertType invariant broken: type " ++ tn ++ " already exists")
 
 typeLeaves :: Type -> [Type]
-typeLeaves (StructType _ s) = nub (map snd s)
+typeLeaves (RecordType _ es) = nub [ e ^. typ | e <- es ]
+typeLeaves (ArrayType _ _ t) = [t]
+typeLeaves (VarArrayType t) = typeLeaves t
 typeLeaves (PrimType (Newtype _ tn)) = [PrimType tn]
 typeLeaves _ = []
 
@@ -49,7 +54,8 @@ childTypes :: Type -> [Type]
 childTypes t = [t] ++ concat (map childTypes (typeLeaves t))
 
 sizeOf :: Type -> Integer
-sizeOf (StructType _ s) = sum [ sizeOf tr | (_, tr) <- s ]
+sizeOf (RecordType _ es) = sum [ sizeOf (e ^. typ) | e <- es ]
+sizeOf (ArrayType _ len t) = len * sizeOf t
 sizeOf (PrimType (Newtype _ tr)) = sizeOf (PrimType tr)
 sizeOf (PrimType (EnumType _ bs _)) = bitsSize bs
 sizeOf (PrimType (AtomType (AtomInt bs))) = bitsSize bs

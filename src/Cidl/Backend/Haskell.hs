@@ -1,44 +1,38 @@
 module Cidl.Backend.Haskell where
 
-import Cidl.Schema
-import Cidl.Interface
+import Cidl.Dict
 import Cidl.Backend.Cabal
 import Cidl.Backend.Haskell.Types
-import Cidl.Backend.Haskell.Test
-import Cidl.Backend.Haskell.Interface
+import Cidl.Backend.Haskell.Dict
 
 import Ivory.Artifact
 
 import Data.Char (isSpace)
 import Data.List (nub)
 import Text.PrettyPrint.Mainland
+import Lens.Family2
 
-haskellBackend :: [Interface] -> String -> String -> [Artifact]
-haskellBackend iis pkgname namespace_raw =
+haskellBackend :: [Dict] -> String -> String -> [Artifact]
+haskellBackend dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
   , stackfile
-  , artifactPath "tests" serializeTestMod
   ] ++
   [ artifactPath "src" m | m <- sourceMods
   ]
   where
-  types = nub [ t | i <- iis, t <- interfaceTypes i]
+  types = nub [ t | d <- dicts, t <- (d ^. dictTypes)]
   tmods = [ typeModule False (namespace ++ ["Types"]) t
           | t <- types
           , isUserDefined t
           ]
-  imods = [ interfaceModule False (namespace ++ ["Interface"]) i
-          | i <- iis
+  imods = [ interfaceModule False (namespace ++ ["Interface"]) d
+          | d <- dicts
           ]
   sourceMods = tmods ++ imods
-  cf = (defaultCabalFile pkgname cabalmods deps) { tests = [ serializeTest ] }
+  cf = defaultCabalFile pkgname cabalmods deps
   cabalmods = [ filePathToPackage (artifactFileName m) | m <- sourceMods ]
   deps = [ "cereal", "QuickCheck" ]
-
-  serializeTest = defaultCabalTest "serialize-test" "SerializeTest.hs"
-                      (pkgname:deps)
-  serializeTestMod = serializeTestModule namespace iis
 
   namespace = dotwords namespace_raw
 
@@ -63,7 +57,7 @@ makefile = artifactText "Makefile" $
 stackfile :: Artifact
 stackfile = artifactText "stack.yaml" $
   prettyLazyText 1000 $ stack
-    [ text "resolver: lts-6.10"
+    [ text "resolver: lts-9.1"
     , empty
     , text "packages:"
     , text "- '.'"

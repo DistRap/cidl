@@ -31,7 +31,7 @@ toCapped = first_cap . toCamel
 
 -- | Get the 'toCapped' name of a 'Type'
 cappedName :: Type -> String
-cappedName (StructType tn _) = toCapped tn
+cappedName (RecordType tn _) = toCapped tn
 cappedName (PrimType (Newtype tn _)) = toCapped tn
 cappedName (PrimType (EnumType tn _ _)) = toCapped tn
 cappedName (PrimType (AtomType _)) =
@@ -47,7 +47,7 @@ mkQName modulepath mname =
 -- the qualified name that refers to that type. For built-in types
 -- like @Bool@, the name might not be qualified at all.
 elmTypeQName :: ModulePath -> Type -> Doc
-elmTypeQName mp (StructType tn _) =
+elmTypeQName mp (RecordType tn _) =
   mkQName mp (toCapped tn)
   <> dot <> text (toCapped tn)
 elmTypeQName mp (PrimType (Newtype tn _)) =
@@ -68,7 +68,7 @@ data ImportType = UserType String
                 deriving (Eq, Show)
 
 importType :: Type -> ImportType
-importType (StructType n _) = UserType n
+importType (RecordType n _) = UserType n
 importType (PrimType (EnumType "bool_t" _ _)) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n

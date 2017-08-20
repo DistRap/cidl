@@ -164,8 +164,4 @@ schemaDoc interfaceName (Schema schemaName schema) = stack
     , empty
     ]
 
-inputFuncName :: String -> String
-inputFuncName tn = userEnumValueName tn ++ "Input"
 
-outputFuncName :: String -> String
-outputFuncName tn = userEnumValueName tn ++ "Output"

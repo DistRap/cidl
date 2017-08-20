@@ -5,17 +5,17 @@ module Cidl.Backend.Rpc (
 import qualified Paths_cidl as P
 
 import Cidl.Backend.Cabal (cabalFileArtifact,defaultCabalFile,filePathToPackage)
-import Cidl.Backend.Haskell.Interface (interfaceModule,ifModuleName)
+import Cidl.Backend.Haskell.Dict (interfaceModule,ifModuleName)
 import Cidl.Backend.Haskell.Types
            (typeModule,isUserDefined,typeModuleName,userTypeModuleName
            ,importType,importDecl, qualifiedImportDecl)
-import Cidl.Interface
-           (Interface(..),MethodName,Method(..),Perm(..)
-           ,interfaceMethods)
-import Cidl.Schema
-           (Schema(..),producerSchema,consumerSchema,Message(..)
-           ,consumerMessages,interfaceTypes,getResponseMessage)
-import Cidl.Types (Type(..))
+--import Cidl.Interface
+--           (Interface(..),MethodName,Method(..)
+--           ,interfaceMethods)
+--import Cidl.Schema
+--           (Schema(..),producerSchema,consumerSchema,Message(..)
+--           ,consumerMessages,interfaceTypes,getResponseMessage)
+import Cidl.Types (Type(..), Perm(..))
 
 import Data.Char (isSpace)
 import Data.List (nub)
@@ -62,7 +62,7 @@ rpcBackend iis pkgName nsStr =
                       ]
   stackfile = artifactText "stack.yaml" $
     prettyLazyText 1000 $ stack
-      [ text "resolver: lts-6.10"
+      [ text "resolver: lts-9.1"
       , empty
       , text "packages:"
       , text "- '.'"
@@ -107,7 +107,7 @@ isEmptySchema (Schema _ ms) = null ms
 
 -- Server Generation -----------------------------------------------------------
 
-rpcModule :: [String] -> Interface -> Artifact
+rpcModule :: [String] -> Dict -> Artifact
 rpcModule ns iface =
   artifactPath (foldr (\ p rest -> p ++ "/" ++ rest) "Rpc" ns) $
   artifactText (ifaceMod ++ ".hs") $
@@ -133,13 +133,11 @@ genServer ns iface ifaceMod = stack $
   , webServerImports hasConsumer
   , line
   , line
-  , managerDefs
   , runServer hasConsumer useManager iface input output
   ]
   where
   hasConsumer = not (isEmptySchema (consumerSchema iface))
-
-  (useManager,managerDefs) = managerDef hasConsumer iface input
+  useManager = False
 
   (input,output) = queueTypes iface
 
@@ -177,7 +175,6 @@ partitionTypes :: Interface -> ([Type],[Type])
 partitionTypes iface = go [] [] (interfaceMethods iface)
   where
   go s a []                           = (nub s, nub a) 
-  go s a ((_,StreamMethod    _ ty):rest) = go (ty:s)     a  rest
   go s a ((_,AttrMethod addr _ ty):rest) = go     s  (ty:a) rest
 
 
@@ -283,9 +280,6 @@ mkRoute ifacePfx consSuffix state method@(name,mty) =
   guardMethods hs  = nest 2 $ text "msum"
                           </> brackets (stack (commas hs))
 
-  handlersFor StreamMethod {} =
-      [ readStream state name ]
-
   handlersFor (AttrMethod addr Read _) =
       [ readAttr method consSuffix m | (addr', m) <- consumerMessages method ]
 
@@ -325,7 +319,7 @@ readAttr (attrname, (AttrMethod addr _ t)) suffix msg =
     , text "writeLoggingLBS logCtx (encode resp)"
     ]
   where
-  resp@(Message _ (StructType resp_tyname _)) = getResponseMessage attrname t
+  resp@(Message _ (RecordType resp_tyname _)) = getResponseMessage attrname t
   responseConstructor = constrName "Producer" resp
   responseSNumed = text $ userTypeModuleName resp_tyname
 
@@ -347,77 +341,7 @@ writeAttr suffix msg = text "Snap.method Snap.POST $" <+> doStmts
   ]
   where
   con = constrName suffix msg
-  (Message _ (StructType sname _)) = msg
-
-
--- The stream manager ----------------------------------------------------------
-
--- | Define everything associated with the manager, but only if there are stream
--- values to manage.
-managerDef :: Bool -> Interface -> InputQueue -> (Bool,Doc)
-managerDef hasConsumer iface input
-  | null streams = (False,empty)
-  | otherwise    = (True,stack defs </> empty)
-  where
-
-  streams = [ (name,ty) | (name,StreamMethod _ ty) <- allMethods iface ]
-
-  (stateType,stateDecl) = stateDef streams
-
-  defs = [ stateDecl
-         , empty
-         , mkStateDef streams
-         , empty
-         , text "manager ::" <+> arrow ([ stateType, input ] ++
-                                        [ input | hasConsumer ] ++
-                                        [ text "IO ()" ])
-         , nest 2 $ spread $
-           [ text "manager state input" ] ++
-           [ text "filtered" | hasConsumer ] ++
-           [ text "= forever $" </> doStmts stmts ]
-         ]
-
-  stmts = [ text "msg <- atomically (readTQueue input)"
-          , nest 2 (text "case msg of" </>
-                   stack (map mkCase streams ++ [ defCase | hasConsumer ])) ]
-
-  -- name the producer constructor for a stream element
-  Schema prodSuffix _ = producerSchema iface
-  prodName ty = text (typeModuleName ty ++ prodSuffix)
-
-  -- update the state for this stream element
-  mkCase (n,ty) = prodName ty <+> text "x -> atomically (writeTSampleVar"
-                              <+> parens (fieldName n <+> text "state")
-                              <+> text "x)"
-
-  defCase = text "notStream -> atomically (writeTQueue filtered notStream)"
-
-
--- | Generate the data type used to hold the streaming values, or nothing if
--- there aren't any present in the interface.
-stateDef :: [(MethodName,Type)] -> (Doc,Doc)
-stateDef streams = (text "State",def)
-  where
-
-  def = nest 2 (text "data State = State" <+> braces fields)
-
-  fields = align (stack (punctuate comma (map mkField streams)))
-
-  mkField (name,ty) =
-    fieldName name
-      <+> text "::"
-      <+> text "TSampleVar"
-      <+> text (typeModuleName ty)
-
-
-mkStateDef :: [(MethodName,Type)] -> Doc
-mkStateDef streams = stack
-  [ text "mkState :: IO State"
-  , nest 2 (text "mkState  =" </> nest 3 (doStmts stmts))
-  ]
-  where
-  stmts = [ fieldName n <+> text "<- newTSampleVarIO" | (n,_) <- streams ]
-       ++ [ text "return State { .. }" ]
+  (Message _ (RecordType sname _)) = msg
 
 
 -- | Given the name of a stream in the interface, produce the selector for the

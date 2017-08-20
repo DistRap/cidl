@@ -15,7 +15,8 @@ data-files: support/elm/Utils.elm.template,
             support/ivory/CodeGen.hs.template,
             support/ivory/Makefile.template,
             support/tower/CodeGen.hs.template,
-            support/tower/Attr.hs.template,
+            support/tower/Attr.hs
+            support/tower/Types.hs
             support/tower/default.conf,
             support/tower/Makefile.template,
             support/rpc/Base.hs.template,
@@ -23,30 +24,26 @@ data-files: support/elm/Utils.elm.template,
 
 library
   exposed-modules:     Cidl,
-                       Cidl.Parse,
-                       Cidl.Interface,
-                       Cidl.Interface.AST,
-                       Cidl.Schema,
+                       Cidl.Monad,
+                       Cidl.Dict,
+                       Cidl.Dict.AST,
                        Cidl.Types,
                        Cidl.Types.AST,
                        Cidl.Types.Base,
+                       Cidl.Utils,
                        Cidl.Backend.Cabal,
-                       Cidl.Backend.Elm,
-                       Cidl.Backend.Elm.Common,
-                       Cidl.Backend.Elm.Interface,
-                       Cidl.Backend.Elm.Type,
+                       --Cidl.Backend.Elm,
+                       --Cidl.Backend.Elm.Common,
+                       --Cidl.Backend.Elm.Dict,
+                       --Cidl.Backend.Elm.Type,
                        Cidl.Backend.Haskell,
-                       Cidl.Backend.Haskell.Interface,
-                       Cidl.Backend.Haskell.Test,
+                       Cidl.Backend.Haskell.Dict,
                        Cidl.Backend.Haskell.Types,
                        Cidl.Backend.Ivory,
-                       Cidl.Backend.Ivory.Schema,
-                       Cidl.Backend.Ivory.Test,
                        Cidl.Backend.Ivory.Types,
-                       Cidl.Backend.Rpc,
+                       --Cidl.Backend.Rpc,
                        Cidl.Backend.Tower,
-                       Cidl.Backend.Tower.Schema,
-                       Cidl.Backend.Tower.Server
+                       Cidl.Backend.Tower.Dict
 
   other-modules:       Paths_cidl
 
@@ -58,10 +55,13 @@ library
                        pretty-show,
                        transformers,
                        ivory-artifact,
-                       s-cargot,
                        text,
                        mtl,
                        filepath,
+                       monadLib,
+                       lens-family,
+                       lens-family-th,
+                       template-haskell,
                        directory
   hs-source-dirs:      src
   default-language:    Haskell2010

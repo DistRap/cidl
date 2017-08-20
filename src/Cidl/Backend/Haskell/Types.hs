@@ -7,8 +7,10 @@ import Data.Char (toUpper)
 import Cidl.Types
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
+import Text.PrettyPrint.Mainland.Class
+import Lens.Family2
 
--- invariant: only make a typeModule from a StructType, NewtypeType, or EnumType
+-- invariant: only make a typeModule from a RecordType, NewtypeType, or EnumType
 -- i.e. when isUserDefined is true.
 typeModule :: Bool -> [String] -> Type -> Artifact
 typeModule useAeson modulepath t =
@@ -47,7 +49,9 @@ typeModule useAeson modulepath t =
 
   --typename = typeModuleName t
 typeHaskellType :: Type -> String
-typeHaskellType (StructType tn _) = userTypeModuleName tn
+typeHaskellType (RecordType tn _) = userTypeModuleName tn
+typeHaskellType (ArrayType tn _ _) = userTypeModuleName tn
+typeHaskellType (VarArrayType t) = typeHaskellType t
 typeHaskellType (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeHaskellType (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeHaskellType (PrimType  (AtomType a)) = case a of
@@ -63,7 +67,8 @@ typeHaskellType (PrimType  (AtomType a)) = case a of
   AtomDouble -> "Double"
 
 typeModuleName :: Type -> String
-typeModuleName (StructType tn _) = userTypeModuleName tn
+typeModuleName (RecordType tn _) = userTypeModuleName tn
+typeModuleName (ArrayType tn _ _) = userTypeModuleName tn
 typeModuleName (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeModuleName (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeModuleName (PrimType (AtomType _)) = error "do not take typeModuleName of an AtomType"
@@ -109,24 +114,24 @@ fromJSONInstance :: TypeName -> Doc
 fromJSONInstance tname = nest 2 (text "instance FromJSON" <+> text tname)
 
 typeDecl :: Type -> Doc
-typeDecl t@(StructType _ ss) = stack
+typeDecl t@(RecordType _ es) = stack
   [ text "data" <+> text tname <+> equals
   , indent 2 $ text tname
   , indent 4 $ encloseStack lbrace (rbrace <+> deriv) comma
-      [ text i <+> colon <> colon <+> text (typeHaskellType st)
-      | (i,st) <- ss ]
+      [ text (e ^. name) <+> colon <> colon <+> text (typeHaskellType (e ^. typ))
+      | e <- es ]
   , empty
   , text ("put" ++ tname) <+> colon <> colon <+> text "Putter" <+> text tname
   , text ("put" ++ tname) <+> text tname <> text "{..}" <+> equals <+> text "do"
   , indent 2 $ stack
-      [ typePutter st <+> text i
-      | (i,st) <- ss ]
+      [ typePutter (e ^. typ) <+> text (e ^. name)
+      | e <- es ]
   , empty
   , text ("get" ++ tname) <+> colon <> colon <+> text "Get" <+> text tname
   , text ("get" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
-      [ text i <+> text "<-" <+> typeGetter st
-      | (i,st) <- ss ] ++
+      [ text (e ^. name) <+> text "<-" <+> typeGetter (e ^. typ)
+      | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
   , empty
   , serializeInstance tname
@@ -134,8 +139,8 @@ typeDecl t@(StructType _ ss) = stack
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
-      [ text i <+> text "<- Q.arbitrary"
-      | (i,_) <- ss ] ++
+      [ text (e ^. name) <+> text "<- Q.arbitrary"
+      | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
   , empty
   , arbitraryInstance tname
@@ -265,7 +270,9 @@ data ImportType = LibraryType String
                 deriving (Eq, Show)
 
 importType :: Type -> ImportType
-importType (StructType n _) = UserType n
+importType (RecordType n _) = UserType n
+importType (ArrayType n _ _) = UserType n
+importType (VarArrayType t) = importType t
 importType (PrimType (EnumType "bool_t" _ _)) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n

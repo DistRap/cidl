@@ -1,6 +1,6 @@
 module Cidl.Backend.Tower where
 
-import Data.List (intercalate)
+import Data.List (nub)
 import Text.PrettyPrint.Mainland
 
 import Ivory.Artifact
@@ -8,39 +8,31 @@ import Ivory.Artifact.Template
 
 import qualified Paths_cidl as P
 
-import Cidl.Interface
-import Cidl.Schema
+import Cidl.Dict
 import Cidl.Backend.Cabal
 import Cidl.Backend.Ivory (dotwords, ivorySources)
-import Cidl.Backend.Ivory.Schema (ifModuleName)
-import Cidl.Backend.Tower.Schema
-import Cidl.Backend.Tower.Server
+import Cidl.Backend.Tower.Dict
 
 towerBackend :: FilePath -> FilePath -> FilePath
-             -> [Interface] -> String -> String -> [Artifact]
-towerBackend ivoryRepo towerRepo ivoryTowerSTM32Repo iis pkgname namespace_raw =
+             -> [Dict] -> String -> String -> [Artifact]
+towerBackend ivoryRepo towerRepo ivoryTowerSTM32Repo dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
   , stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo
   , defaultconf
-  , artifactPath "tests" (codegenTest iis namespace)
+--  , artifactPath "tests" (codegenTest iis namespace)
   ] ++ map (artifactPath "src") sources
   where
   namespace = dotwords namespace_raw
 
-  sources = isources ++ tsources
-         ++ [ attrModule (namespace ++ ["Tower"])
-                         (namespace ++ ["Ivory","Types"]) ]
+  sources = isources ++ tsources ++ [attrs, dicttypes]
 
-  tsources = towerSources iis (namespace ++ ["Tower"])
+  tsources = towerSources dicts (namespace ++ ["Tower"])
 
-  isources = ivorySources iis (namespace ++ ["Ivory"])
+  isources = ivorySources dicts (namespace ++ ["Ivory"])
 
-  cf = (defaultCabalFile pkgname cabalmods towerDeps) { tests = [ cg_test ] }
-  cabalmods = map (filePathToPackage . artifactFileName) sources
-  cg_test = defaultCabalTest cg_test_name "CodeGen.hs"
-            (towerDeps ++ towerTestDeps ++ [pkgname])
-  cg_test_name = pkgname ++ "-gen"
+  cf = (defaultCabalFile pkgname cabalmods towerDeps)
+  cabalmods = nub $ map (filePathToPackage . artifactFileName) sources
 
 towerDeps :: [String]
 towerDeps =
@@ -56,16 +48,14 @@ towerTestDeps =
   , "tower-freertos-stm32"
   ]
 
-towerSources :: [Interface] -> [String] -> [Artifact]
-towerSources iis namespace = towerInterfaces
+towerSources :: [Dict] -> [String] -> [Artifact]
+towerSources dicts namespace = towerInterfaces
   where
   towerInterfaces = concat
-    [ [ schemaModule    ifnamespace i (producerSchema i)
-      , schemaModule    ifnamespace i (consumerSchema i)
-      , serverModule    ifnamespace i
-      , umbrellaModule  ifnamespace i
+    [ [ dictModule    ifnamespace d
+      , umbrellaModule  ifnamespace d
       ]
-    | i <- iis ]
+    | d <- dicts ]
   ifnamespace = namespace ++ ["Interface"]
 
 makefile :: Artifact
@@ -75,7 +65,7 @@ makefile =
 stackfile :: FilePath -> FilePath -> FilePath -> Artifact
 stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo = artifactText "stack.yaml" $
   prettyLazyText 1000 $ stack
-    [ text "resolver: lts-6.10"
+    [ text "resolver: lts-9.1"
     , empty
     , text "packages:"
     , text "- '.'"
@@ -101,59 +91,22 @@ stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo = artifactText "stack.yaml" $
     , text "    - ivory-bsp-stm32"
     , text "    - ivory-freertos-bindings"
     , text "    - tower-freertos-stm32"
-    , empty
-    , text "extra-deps:"
-    , text "  - exception-mtl-0.4"
-    , text "  - ghc-srcspan-plugin-0.2.1.0"
-    , text "  - language-c-quote-0.11.6"
-    , text "  - mainland-pretty-0.4.1.4"
-    , text "  - symbol-0.2.4"
+    , text "  extra-dep: true"
     , empty
     , text "install-ghc: true"
+    , empty
+    , text "extra-deps:"
+    , text "- monadLib-3.7.3"
     , empty
     ]
 
 defaultconf :: Artifact
 defaultconf = artifactCabalFile P.getDataDir "support/tower/default.conf"
 
-codegenTest :: [Interface] -> [String] -> Artifact
-codegenTest iis modulepath =
-  artifactCabalFileTemplate P.getDataDir fname
-    [("module_path",intercalate "." modulepath)
-    ,("imports", intercalate "\n"
-                  [ "import "
-                    ++ interfaceImport (ifModuleName i) "Producer"
-                    ++ "\n"
-                    ++ "import "
-                    ++ interfaceImport (ifModuleName i) "Consumer"
-                  | i <- iis
-                  ])
-    ,("app_body", intercalate "\n  " (concat [ interfaceTest i | i <- iis ]))
-    ]
-  where
-  fname = "support/tower/CodeGen.hs.template"
-  interfaceImport i j = intercalate "." (modulepath ++ ["Tower", "Interface", i, j])
+attrs :: Artifact
+attrs = artifactPath "CANOpen/Tower" $
+  artifactCabalFile P.getDataDir "support/tower/Attr.hs"
 
-  interfaceTest :: Interface -> [String]
-  interfaceTest i = [ schemaTest (producerSchema i)
-                    , schemaTest (consumerSchema i)
-                    ]
-    where
-    schemaTest :: Schema -> String
-    schemaTest (Schema _ []) = []
-    schemaTest (Schema schemaName _)
-      =  (inputFuncName ((ifModuleName i) ++ schemaName))
-      ++ " (snd c) >>= \\i -> "
-      ++ (outputFuncName ((ifModuleName i) ++ schemaName))
-      ++ " i >>= \\(_ :: ChanOutput ('Array 80 ('Stored Uint8))) -> return ()"
-
-
-attrModule :: [String] -> [String] -> Artifact
-attrModule modulepath typespath =
-  artifactPath (intercalate "/" modulepath) $
-  artifactCabalFileTemplate P.getDataDir fname
-    [("module_path", intercalate "." modulepath )
-    ,("types_path", intercalate "." typespath)
-    ]
-  where
-  fname = "support/tower/Attr.hs.template"
+dicttypes :: Artifact
+dicttypes = artifactPath "CANOpen/Tower" $
+  artifactCabalFile P.getDataDir "support/tower/Types.hs"

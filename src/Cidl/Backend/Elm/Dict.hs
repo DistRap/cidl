@@ -10,7 +10,7 @@
 -- selection of messages that are exposed in this convenience
 -- interface. For example, you can send @set@ requests, but not
 -- receive them.
-module Cidl.Backend.Elm.Interface where
+module Cidl.Backend.Elm.Dict where
 
 import Prelude ()
 import Prelude.Compat
@@ -19,10 +19,11 @@ import Data.Char (toUpper)
 import Data.List (intercalate,nub)
 
 import Cidl.Backend.Elm.Common
+import Cidl.Types.AST
 import Cidl.Interface
-    (Interface(..),Method(..),MethodName,interfaceMethods,readable,writable)
+    (Interface(..),Method(..),MethodName,interfaceMethods)
 
-import Cidl.Types (Type(..))
+import Cidl.Types --(Type(..), readable, writable)
 
 import Ivory.Artifact
     (Artifact,artifactPath,artifactText)
@@ -72,7 +73,6 @@ clientMessages :: Interface -> [ClientMessage]
 clientMessages i = concatMap f (interfaceMethods i)
   where
   f :: (MethodName, Method) -> [ClientMessage]
-  f (_, (StreamMethod _    _)) = [] -- unimplemented
   f (n, (AttrMethod addr perm t)) =
     [ SetMessage n t | writable perm ] ++
     [ GetMessage n t | readable perm ]

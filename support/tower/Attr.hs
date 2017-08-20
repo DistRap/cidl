@@ -2,11 +2,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module $module_path$.Attr where
+module CANOpen.Tower.Attr where
 
 import Ivory.Language
 import Ivory.Tower
-import $types_path$.SequenceNum
 
 data AttrWriter a =
   AttrWriter
@@ -31,8 +30,8 @@ attrReaderState :: (IvoryArea a, IvoryZero a)
                 => AttrReader a -> Monitor e (Ref 'Global a)
 attrReaderState ar@AttrReader{..} = do
   s <- stateInit ar_name ar_ival
-  attrReaderHandler ar \$ do
-    callback \$ \\v -> refCopy s v
+  attrReaderHandler ar $ do
+    callback $ \v -> refCopy s v
   return s
 
 attrReaderHandler :: (IvoryArea a, IvoryZero a)
@@ -75,16 +74,19 @@ class AttrReadable p where
   attrState   :: (IvoryArea a, IvoryZero a) => p a -> Monitor e (Ref 'Global a)
   attrHandler :: (IvoryArea a, IvoryZero a) => p a -> Handler a e () -> Monitor e ()
   attrReaderChan :: p a -> ChanOutput a
+  attrInit   :: (IvoryArea a, IvoryZero a) => p a -> Init a
 
 instance AttrReadable AttrReader where
   attrState = attrReaderState
   attrHandler = attrReaderHandler
   attrReaderChan = ar_chan
+  attrInit = ar_ival
 
 instance AttrReadable Attr where
   attrState = attrReaderState . attr_reader
   attrHandler p k = attrReaderHandler (attr_reader p) k
   attrReaderChan = attrReaderChan . attr_reader
+  attrInit = attrInit . attr_reader
 
 class AttrWritable p where
   attrEmitter :: (IvoryArea a, IvoryZero a) => p a -> Handler b e (Emitter a)
@@ -96,75 +98,64 @@ instance AttrWritable Attr where
   attrEmitter = attrWriterEmitter . attr_writer
 
 
-readableAttrServer :: ( IvoryArea a, IvoryZero a
-                      , IvoryArea ('Struct b), IvoryZero ('Struct b), IvoryStruct b)
-                   => Label b a
-                   -> Label b ('Stored SequenceNum)
-                   -> Attr a
-                   -> ChanOutput ('Stored SequenceNum)
-                   -> Tower e (ChanOutput ('Struct b))
-readableAttrServer val_lbl snum_lbl p get = do
+readableAttrServer :: ( IvoryArea a, IvoryZero a, AttrReadable w, AttrNamed w)
+                   => w a
+                   -> ChanOutput ('Stored IBool)
+                   -> Tower e (ChanOutput a, Init a)
+readableAttrServer p get = do
   get_response <- channel
-  monitor (named "Server") \$ do
+  monitor (named "Server") $ do
     s <- attrState p
-    handler get (named "Get") \$ do
+    handler get (named "Get") $ do
       e <- emitter (fst get_response) 1
-      callbackV \$ \\snum -> do
+      callback $ const $ do
         v <- local izero
-        refCopy (v ~> val_lbl) s
-        store (v ~> snum_lbl) snum
+        refCopy v s
         emit e (constRef v)
-  return (snd get_response)
+  return (snd get_response, attrInit p)
   where
   named n = attrName p ++ n
 
-writableAttrServer :: (IvoryArea a, IvoryZero a
-                      , IvoryArea ('Struct b), IvoryZero ('Struct b), IvoryStruct b)
-                   => Label b a
-                   -> Label b ('Stored SequenceNum)
-                   -> Attr a
-                   -> ChanOutput ('Struct b)
-                   -> Tower e (ChanOutput ('Stored SequenceNum))
-writableAttrServer val_lbl snum_lbl p set = do
+writableAttrServer :: (IvoryArea a, IvoryZero a)
+                   => Attr a
+                   -> ChanOutput a
+                   -> Tower e (ChanOutput ('Stored IBool), Init a)
+writableAttrServer p set = do
   set_response <- channel
-  monitor (named "Server") \$ do
-    handler set (named "Set") \$ do
+  monitor (named "Server") $ do
+    handler set (named "Set") $ do
       e <- attrEmitter p
       r <- emitter (fst set_response) 1
-      callback \$ \\v -> do
-        emit e (v ~> val_lbl)
-        emit r (v ~> snum_lbl)
-  return (snd set_response)
+      callback $ \v -> do
+        emit e v
+        emitV r true
+  return (snd set_response, attrInit p)
   where
   named n = attrName p ++ n
 
-readwritableAttrServer :: ( IvoryArea a, IvoryZero a
-                          , IvoryArea ('Struct b), IvoryZero ('Struct b), IvoryStruct b)
-                       => Label b a
-                       -> Label b ('Stored SequenceNum)
-                       -> Attr a
-                       -> ChanOutput ('Stored SequenceNum)
-                       -> ChanOutput ('Struct b)
-                       -> Tower e (ChanOutput ('Struct b), ChanOutput ('Stored SequenceNum))
-readwritableAttrServer val_lbl snum_lbl p get set = do
+readwritableAttrServer :: ( IvoryArea a, IvoryZero a)
+                       => Attr a
+                       -> ChanOutput ('Stored IBool)
+                       -> ChanOutput a
+                       -> Tower e (ChanOutput a, ChanOutput ('Stored IBool), Init a)
+readwritableAttrServer p get set = do
   get_response <- channel
   set_response <- channel
-  monitor (named "Server") \$ do
+  monitor (named "Server") $ do
     s <- attrState p
-    handler get (named "Get") \$ do
+    handler get (named "Get") $ do
       e <- emitter (fst get_response) 1
-      callbackV \$ \\snum -> do
+      callback $ const $ do
         v <- local izero
-        refCopy (v ~> val_lbl) s
-        store (v ~> snum_lbl) snum
+        refCopy v s
         emit e (constRef v)
-    handler set (named "Set") \$ do
+    handler set (named "Set") $ do
       e <- attrEmitter p
       r <- emitter (fst set_response) 1
-      callback \$ \\v -> do
-        emit e (v ~> val_lbl)
-        emit r (v ~> snum_lbl)
-  return (snd get_response, snd set_response)
+      callback $ \v -> do
+        emit e v
+        emitV r true
+  return (snd get_response, snd set_response, attrInit p)
   where
   named n = attrName p ++ n
 
@@ -173,7 +164,7 @@ attrProxy :: (AttrWritable w, AttrNamed w, IvoryArea a, IvoryZero a)
           -> ChanOutput a
           -> Tower e ()
 attrProxy attr chan = do
-  monitor (attrName attr ++ "Proxy") \$ do
-    handler chan ("write_" ++ attrName attr) \$ do
+  monitor (attrName attr ++ "Proxy") $ do
+    handler chan ("write_" ++ attrName attr) $ do
       e <- attrEmitter attr
-      callback \$ \\v -> emit e v
+      callback $ \v -> emit e v
