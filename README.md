@@ -38,6 +38,8 @@ require the [Ivory][], [Tower][], and [ivory-tower-stm32][] repositories. These
 should also be found, by default, in the parent directory, but
 alternate locations can be specified when running Cidl.
 
+[Ivory]: http://github.com/GaloisInc/ivory
+[Tower]: http://github.com/GaloisInc/tower
 [ivory-tower-stm32]: https://github.com/GaloisInc/ivory-tower-stm32
 
 ```
