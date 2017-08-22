@@ -47,7 +47,6 @@ typeModule useAeson modulepath t =
   tm mname = mconcat $ punctuate dot
                      $ map text (modulepath ++ [mname])
 
-  --typename = typeModuleName t
 typeHaskellType :: Type -> String
 typeHaskellType (RecordType tn _) = userTypeModuleName tn
 typeHaskellType (ArrayType tn _ _) = userTypeModuleName tn
@@ -69,6 +68,7 @@ typeHaskellType (PrimType  (AtomType a)) = case a of
 typeModuleName :: Type -> String
 typeModuleName (RecordType tn _) = userTypeModuleName tn
 typeModuleName (ArrayType tn _ _) = userTypeModuleName tn
+typeModuleName (VarArrayType t) = typeModuleName t
 typeModuleName (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeModuleName (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeModuleName (PrimType (AtomType _)) = error "do not take typeModuleName of an AtomType"
@@ -148,6 +148,15 @@ typeDecl t@(RecordType _ es) = stack
   where
   tname = typeModuleName t
   deriv = typeDeriving ["Eq", "Show", "Data", "Typeable", "Generic"]
+
+typeDecl (VarArrayType t) = typeDecl t
+typeDecl (ArrayType tname len t) =
+      text "type"
+  <+> text typename
+  <+> equals
+  <+> parens (text $ typeHaskellType t)
+  where
+  typename = userTypeModuleName tname
 
 typeDecl t@(PrimType (Newtype _ n)) = stack
   [ text "newtype" <+> text tname <+> equals
@@ -231,15 +240,15 @@ typePutter struct = text "put" <> text (typeModuleName struct)
 
 primTypePutter :: PrimType -> Doc
 primTypePutter (Newtype tn _) = text "put" <> text (userTypeModuleName tn)
-primTypePutter (EnumType "bool_t" _ _) = text "put"
+primTypePutter (EnumType "bool" _ _) = text "put"
 primTypePutter (EnumType tn _ _) = text "put" <> text (userTypeModuleName tn)
 primTypePutter (AtomType (AtomInt _)) = text "put"
 primTypePutter (AtomType (AtomWord Bits8)) = text "putWord8"
-primTypePutter (AtomType (AtomWord Bits16)) = text "putWord16be"
-primTypePutter (AtomType (AtomWord Bits32)) = text "putWord32be"
-primTypePutter (AtomType (AtomWord Bits64)) = text "putWord64be"
-primTypePutter (AtomType AtomFloat) = text "putFloat32be"
-primTypePutter (AtomType AtomDouble) = text "putFloat64be"
+primTypePutter (AtomType (AtomWord Bits16)) = text "putWord16le"
+primTypePutter (AtomType (AtomWord Bits32)) = text "putWord32le"
+primTypePutter (AtomType (AtomWord Bits64)) = text "putWord64le"
+primTypePutter (AtomType AtomFloat) = text "putFloat32le"
+primTypePutter (AtomType AtomDouble) = text "putFloat64le"
 
 
 typeGetter :: Type -> Doc
@@ -248,15 +257,15 @@ typeGetter struct = text "get" <> text (typeModuleName struct)
 
 primTypeGetter :: PrimType -> Doc
 primTypeGetter (Newtype tn _) = text "get" <> text (userTypeModuleName tn)
-primTypeGetter (EnumType "bool_t" _ _) = text "get"
+primTypeGetter (EnumType "bool" _ _) = text "get"
 primTypeGetter (EnumType tn _ _) = text "get" <> text (userTypeModuleName tn)
 primTypeGetter (AtomType (AtomInt _)) = text "get"
 primTypeGetter (AtomType (AtomWord Bits8)) = text "getWord8"
-primTypeGetter (AtomType (AtomWord Bits16)) = text "getWord16be"
-primTypeGetter (AtomType (AtomWord Bits32)) = text "getWord32be"
-primTypeGetter (AtomType (AtomWord Bits64)) = text "getWord64be"
-primTypeGetter (AtomType AtomFloat) = text "getFloat32be"
-primTypeGetter (AtomType AtomDouble) = text "getFloat64be"
+primTypeGetter (AtomType (AtomWord Bits16)) = text "getWord16le"
+primTypeGetter (AtomType (AtomWord Bits32)) = text "getWord32le"
+primTypeGetter (AtomType (AtomWord Bits64)) = text "getWord64le"
+primTypeGetter (AtomType AtomFloat) = text "getFloat32le"
+primTypeGetter (AtomType AtomDouble) = text "getFloat64le"
 
 sizedPrim :: Bits -> PrimType
 sizedPrim b = AtomType (AtomWord b)
@@ -273,7 +282,7 @@ importType :: Type -> ImportType
 importType (RecordType n _) = UserType n
 importType (ArrayType n _ _) = UserType n
 importType (VarArrayType t) = importType t
-importType (PrimType (EnumType "bool_t" _ _)) = NoImport
+importType (PrimType (EnumType "bool" _ _)) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n
 importType (PrimType (AtomType a)) =

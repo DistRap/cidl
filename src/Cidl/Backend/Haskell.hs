@@ -21,10 +21,10 @@ haskellBackend dicts pkgname namespace_raw =
   [ artifactPath "src" m | m <- sourceMods
   ]
   where
-  types = nub [ t | d <- dicts, t <- (d ^. dictTypes)]
+  userDefinedTypes = [ t | d <- dicts, t <- allTypes d, isUserDefined t ]
   tmods = [ typeModule False (namespace ++ ["Types"]) t
-          | t <- types
-          , isUserDefined t
+          | t <- userDefinedTypes
+          --, isUserDefined t
           ]
   imods = [ interfaceModule False (namespace ++ ["Interface"]) d
           | d <- dicts
