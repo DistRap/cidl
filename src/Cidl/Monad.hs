@@ -58,6 +58,10 @@ varArray n len t = VarArrayType $ record ("var_array_" ++ n)
 record :: String -> [Entry] -> Type
 record n fields = RecordType n fields
 
+-- just an alias
+struct :: String -> [Entry] -> Type
+struct = record
+
 dict :: String -> WriterT [Entry] Id () -> Dict
 dict n x = Dict
   { _dictName = n
@@ -68,6 +72,9 @@ dict n x = Dict
 
 depend :: Dict -> Dict -> Dict
 depend x = dictParents %~ (x:)
+
+withTypes :: [Type] -> Dict -> Dict
+withTypes ts = dictTypes %~ (++ts)
 
 at :: WriterM m [Entry] => Integer -> Entry -> m ()
 at addr e = put [ (index .~ addr) e ]
@@ -212,11 +219,11 @@ cia402Dict = dict "cia402" $ do
   -- at 0x60F7 $ field "power_stage_params" -- manufacturer specific record
   at 0x60F8 $ field "max_slippage" sint32
   at 0x60F9 $ field "velocity_paramaters" (array "velocity_params" 2 uint16)
-
-  at 0x60FF $ field "target_velocity" sint32
     -- ^^ pid control params
     -- subindex 1 is Gain, subindex 2 is Ti - sintegration time constant
+  at 0x60FF $ field "target_velocity" sint32
   --at 0x6001 $ field "testarr" (array "testarr" 10 uint8)
+  at 0x80AA $ field "test_value" sint32
 
 
 --  TODO: handle node offset setters
