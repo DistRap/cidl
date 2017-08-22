@@ -13,19 +13,19 @@ import Cidl.Backend.Cabal
 import Cidl.Backend.Ivory (dotwords, ivorySources)
 import Cidl.Backend.Tower.Dict
 
-towerBackend :: FilePath -> FilePath -> FilePath
+towerBackend :: FilePath -> FilePath -> FilePath -> FilePath
              -> [Dict] -> String -> String -> [Artifact]
-towerBackend ivoryRepo towerRepo ivoryTowerSTM32Repo dicts pkgname namespace_raw =
+towerBackend ivoryRepo towerRepo ivoryTowerSTM32Repo canopenRepo dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
-  , stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo
+  , stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo canopenRepo
   , defaultconf
 --  , artifactPath "tests" (codegenTest iis namespace)
   ] ++ map (artifactPath "src") sources
   where
   namespace = dotwords namespace_raw
 
-  sources = isources ++ tsources ++ [attrs, dicttypes]
+  sources = isources ++ tsources -- ++ [attrs, dicttypes]
 
   tsources = towerSources dicts (namespace ++ ["Tower"])
 
@@ -40,6 +40,7 @@ towerDeps =
   , "ivory-serialize"
   , "ivory-stdlib"
   , "tower"
+  , "ivory-tower-canopen-core"
   ]
 
 towerTestDeps :: [String]
@@ -62,8 +63,8 @@ makefile :: Artifact
 makefile =
   artifactCabalFileTemplate P.getDataDir "support/tower/Makefile.template" []
 
-stackfile :: FilePath -> FilePath -> FilePath -> Artifact
-stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo = artifactText "stack.yaml" $
+stackfile :: FilePath -> FilePath -> FilePath -> FilePath -> Artifact
+stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo canopenRepo = artifactText "stack.yaml" $
   prettyLazyText 1000 $ stack
     [ text "resolver: lts-9.1"
     , empty
@@ -92,6 +93,9 @@ stackfile ivoryRepo towerRepo ivoryTowerSTM32Repo = artifactText "stack.yaml" $
     , text "    - ivory-freertos-bindings"
     , text "    - tower-freertos-stm32"
     , text "  extra-dep: true"
+    , text ("- location: " ++ canopenRepo)
+    , text "  extra-dep: true"
+    , text "    - ivory-tower-canopen-core"
     , empty
     , text "install-ghc: true"
     , empty

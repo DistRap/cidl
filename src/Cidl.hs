@@ -1,5 +1,9 @@
 module Cidl
   ( run
+  , runCidl
+  , module Cidl.Monad
+  , module Cidl.Types.AST
+  , module Cidl.Types.Base
   ) where
 
 import Prelude ()
@@ -17,7 +21,10 @@ import Text.Show.Pretty
 
 import Ivory.Artifact
 --import Cidl.Parse
+import Cidl.Dict
 import Cidl.Monad
+import Cidl.Types.AST
+import Cidl.Types.Base
 --import Cidl.Backend.Elm (elmBackend)
 import Cidl.Backend.Haskell
 import Cidl.Backend.Ivory
@@ -57,6 +64,7 @@ data Opts = Opts
   , ivoryrepo           :: FilePath
   , towerrepo           :: FilePath
   , ivorytowerstm32repo :: FilePath
+  , canopenrepo         :: FilePath
   , packagename         :: String
   , namespace           :: String
   , debug               :: Bool
@@ -70,6 +78,7 @@ initialOpts = Opts
   , ivoryrepo           = "ivory"
   , towerrepo           = "tower"
   , ivorytowerstm32repo = "ivory-tower-stm32"
+  , canopenrepo         = "ivory-tower-canopen"
   , packagename         = error (usage ["must specify a package name"])
   , namespace           = ""
   , debug               = False
@@ -99,6 +108,9 @@ setTowerRepo p = success (\o -> o { towerrepo = p })
 setIvoryTowerSTM32Repo :: String -> OptParser Opts
 setIvoryTowerSTM32Repo p = success (\o -> o { ivorytowerstm32repo = p })
 
+setCANOpenRepo :: String -> OptParser Opts
+setCANOpenRepo p = success (\o -> o { canopenrepo = p })
+
 setPackageName :: String -> OptParser Opts
 setPackageName p = success (\o -> o { packagename = p })
 
@@ -124,6 +136,9 @@ options =
   , Option []  ["ivory-tower-stm32-repo"]
       (ReqArg setIvoryTowerSTM32Repo "REPO")
       "root of ivory-tower-stm32.git (for Tower backend only)"
+  , Option []  ["canopen-repo"]
+      (ReqArg setCANOpenRepo "REPO")
+      "root of ivory-tower-canopen.git (for Tower backend only)"
   , Option "p" ["package"]   (ReqArg setPackageName "NAME")
       "package name for output"
   , Option "n" ["namespace"] (ReqArg setNamespace "NAME")
@@ -148,10 +163,12 @@ usage errs = usageInfo banner options
   banner = unlines (errs ++ ["", "Usage: cidl OPTIONS"])
 
 run :: IO ()
-run = do
+run = runCidl interfaces
+
+runCidl :: [Dict] -> IO ()
+runCidl dicts = do
   args <- getArgs
   opts <- parseOpts args
-  let dicts = interfaces
   when (debug opts) $ do
     putStrLn (ppShow dicts)
   let absolutize p name = do
@@ -175,7 +192,9 @@ run = do
            towerAbs           <- absolutize (towerrepo opts) "Tower"
            ivoryTowerSTM32Abs <- absolutize (ivorytowerstm32repo opts)
                                             "ivory-tower-stm32"
-           return (towerBackend ivoryAbs towerAbs ivoryTowerSTM32Abs)
+           canopenAbs <- absolutize (canopenrepo opts)
+                                            "ivory-tower-canopen"
+           return (towerBackend ivoryAbs towerAbs ivoryTowerSTM32Abs canopenAbs)
 --         RpcBackend -> return rpcBackend
 --         ElmBackend -> return elmBackend
   artifactBackend opts (b dicts (packagename opts) (namespace opts))

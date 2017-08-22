@@ -20,6 +20,7 @@ allEntries d = concatMap allEntries (d ^. dictParents) ++ (d ^. dictEntries)
 allTypes :: Dict -> [Type]
 allTypes d = nubBy (ignoreRecordInits) $
     concatMap allTypes (d ^. dictParents)
+    ++ (d ^. dictTypes)
     ++ entryTypes
     ++ concatMap typeLeaves entryTypes
   where
