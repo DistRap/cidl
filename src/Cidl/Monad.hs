@@ -62,6 +62,12 @@ record n fields = RecordType n fields
 struct :: String -> [Entry] -> Type
 struct = record
 
+enum :: String -> [(Identifier, Integer)] -> Type
+enum n x = PrimType $ EnumType n Bits32 x
+
+ens :: Integer -> Identifier -> (Identifier, Integer)
+ens n idx = (idx, n)
+
 dict :: String -> WriterT [Entry] Id () -> Dict
 dict n x = Dict
   { _dictName = n
