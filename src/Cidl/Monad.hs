@@ -140,7 +140,12 @@ spec = NodeSpec
   }
 
 interfaces :: [Dict]
-interfaces = [ baseDict spec, cia402Dict ]
+interfaces =
+  [ baseDict spec
+  , cia401Dict
+  , cia402Dict
+  , reflowDict
+  ]
 
 baseDict :: NodeSpec -> Dict
 baseDict nodeSpec = dict "base" $ do
@@ -187,12 +192,13 @@ baseDict nodeSpec = dict "base" $ do
     at (0x1800 + x) $ tpdoCommField $ x + 1
     at (0x1A00 + x) $ tpdoMapField $ x + 1
 
---cia402Dict :: Dict
---cia402Dict = dict "cia402" $ do
---  at 0x606C $ field "velocity_actual" sint32 & ro
---  at 0x60FF $ field "target_velocity" sint32
---
---  at 0x60EE $ field "test" sint32
+cia401Dict :: Dict
+cia401Dict = dict "cia401" $ do
+  -- TODO: actually an array
+  -- subindex 0 - number of outputs
+  -- subindex 1 - write output 1..8
+  -- subindex 1 - write output 2..8
+  at 0x6200 $ field "io_output" uint8
 
 cia402Dict :: Dict
 cia402Dict = dict "cia402" $ do
@@ -231,6 +237,21 @@ cia402Dict = dict "cia402" $ do
   --at 0x6001 $ field "testarr" (array "testarr" 10 uint8)
   at 0x80AA $ field "test_value" sint32
 
+reflowDict :: Dict
+reflowDict = dict "reflow" $ do
+  at 0x6000 $ field "temperature" float & ro
+  at 0x6001 $ field "temperature_target" float
+  at 0x6002 $ field "control_effort" float & ro
+
+  at 0x6100 $ field "pid_p" float
+  at 0x6101 $ field "pid_i" float
+  at 0x6102 $ field "pid_d" float
+  at 0x61FF $ field "pid_reset" bool
+
+  at 0x6200 $ field "pid_p_actual" float & ro
+  at 0x6201 $ field "pid_i_actual" float & ro
+  at 0x6202 $ field "pid_d_actual" float & ro
+  at 0x62FF $ field "pid_output" float & ro
 
 --  TODO: handle node offset setters
 --  ConstArray
