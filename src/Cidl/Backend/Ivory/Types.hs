@@ -15,7 +15,7 @@ typeUmbrella modulepath ts =
   artifactPath (intercalate "/" modulepath) $
   artifactText ("Types.hs") $
   prettyLazyText 1000 $
-  stack
+  stack $
     [ text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
     , text "module" <+> typeModulePath modulepath "Types" <+> text "where"
     , empty
@@ -25,16 +25,33 @@ typeUmbrella modulepath ts =
         | t <- ts ]
     , empty
     , text "typeModules :: [Module]"
-    , text "typeModules ="
-    , indent 2 $ encloseStack lbracket rbracket comma
-        [ text tname <> dot
-          <> text (userEnumValueName tname) <> text "TypesModule"
-        | t <- ts
-        , let tname = typeModuleName t
-        -- XXX: hackish, maybe typeIvoryModule is incorrect?
-        , notArray t
-        ]
     ]
+    ++ maybeTypeModules
+  where
+    -- in case there's only an array defined, this can
+    -- end up (m)empty, preserve for now but maybe skip
+    -- generating the file altogether
+    maybeTypeModules =
+      if null mods
+      then
+        [ text "typeModules = mempty" ]
+      else
+        [ text "typeModules ="
+        , indent 2
+           $ encloseStack
+               lbracket
+               rbracket
+               comma
+               mods
+        ]
+
+    mods =
+      [ text tname <> dot
+        <> text (userEnumValueName tname) <> text "TypesModule"
+      | t <- ts
+      , let tname = typeModuleName t
+      , notArray t
+      ]
 
 notArray :: Type -> Bool
 notArray (ArrayType _ _ _) = False
