@@ -250,7 +250,7 @@ objdictTower d =
     ]
 
   packArrayVar n = stack [
-      text "let ix = toIx $ (safeCast :: Uint8 -> Sint32) subindex"
+      text "let ix = toIx $ (safeCast :: Uint8 -> Sint32) (subindex - 1)"
     , text "    sz = packsize" <+> parens (callbackVar n <+> text "! ix")
     , text "packInto (getres ~> getres_buf ~> stringDataL) 0" <+> parens (callbackVar n <+> text "! ix")
     , text "store (getres ~> getres_buf ~> stringLengthL) sz"
