@@ -194,11 +194,16 @@ baseDict nodeSpec = dict "base" $ do
 
 cia401Dict :: Dict
 cia401Dict = dict "cia401" $ do
-  -- TODO: actually an array
+  at 0x6200
+    $ field
+        "io_output"
+        $ array
+            "output"
+            1 -- only one register of 8 outputs
+            uint8
   -- subindex 0 - number of outputs
   -- subindex 1 - write output 1..8
-  -- subindex 1 - write output 2..8
-  at 0x6200 $ field "io_output" uint8
+  -- subindex 1 - write output 9..16
 
 cia402Dict :: Dict
 cia402Dict = dict "cia402" $ do
