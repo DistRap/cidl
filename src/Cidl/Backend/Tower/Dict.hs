@@ -241,9 +241,6 @@ objdictTower d =
   condAddr addr = text "address ==?" <+> fmtHex addr <+> text "==> do"
   condSub subindex = text "subindex ==?" <+> integer subindex <+> text "==> do"
   condArray len = text "subindex >=? 1 .&& subindex <=?" <+> integer len <+> text "==> do"
-  -- XXX: ^^ they actually force us to index arrays from 1
-  -- while index 0 contains length
-  -- check if array sizes and bounds are correct
 
   packCbVar n = stack [
       text "let sz = packsize" <+> parens (callbackVar n)
