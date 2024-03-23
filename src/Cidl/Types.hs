@@ -57,6 +57,8 @@ childTypes t = [t] ++ concat (map childTypes (typeLeaves t))
 sizeOf :: Type -> Integer
 sizeOf (RecordType _ es) = sum [ sizeOf (e ^. typ) | e <- es ]
 sizeOf (ArrayType _ len t) = len * sizeOf t
+-- sus, but sizeOf is not used anywhere yet for now
+sizeOf (VarArrayType t) = sizeOf t
 sizeOf (PrimType (Newtype _ tr)) = sizeOf (PrimType tr)
 sizeOf (PrimType (EnumType _ bs _)) = bitsSize bs
 sizeOf (PrimType (AtomType (AtomInt bs))) = bitsSize bs

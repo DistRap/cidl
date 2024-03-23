@@ -5,7 +5,6 @@ import Data.List (nub)
 import Text.PrettyPrint.Mainland
 
 import Ivory.Artifact
-import Ivory.Artifact.Template
 
 import Cidl.Dict
 import Cidl.Backend.Cabal

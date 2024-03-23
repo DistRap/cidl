@@ -7,7 +7,7 @@ module Cidl.Monad where
 
 import MonadLib
 import Data.Default.Class (Default(def))
-import Control.Lens ((^.), (.~), (%~), (&))
+import Control.Lens ((.~), (%~), (&))
 
 import Cidl.Types.AST
 import Cidl.Types.Base
@@ -110,10 +110,16 @@ data NodeSpec = NodeSpec
   }
 
 identity :: NodeSpec -> Type
-identity NodeSpec{..} = record "identity" $ map mkfield $ zip
-    ["vendor_id", "product_code", "revision_number", "serial_number"]
-    [vendorId, productCode, revisionNumber, serialNumber]
-  where mkfield (x, def) = field x uint32 & defaultNum def
+identity NodeSpec{..} =
+  record "identity"
+    $ map mkfield
+    $ zip
+        ["vendor_id", "product_code", "revision_number", "serial_number"]
+        [vendorId, productCode, revisionNumber, serialNumber]
+  where
+    mkfield (x, defNum) =
+      field x uint32
+        & defaultNum defNum
 
 -- PDO communication parameters
 -- ! PDOs are indexed from 1

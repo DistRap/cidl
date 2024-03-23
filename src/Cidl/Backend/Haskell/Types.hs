@@ -2,7 +2,6 @@
 module Cidl.Backend.Haskell.Types where
 
 import Control.Lens ((^.))
-import Data.Monoid
 import Data.List (intercalate, nub)
 import Data.Char (toUpper)
 import Cidl.Types
@@ -151,7 +150,7 @@ typeDecl t@(RecordType _ es) = stack
   deriv = typeDeriving ["Eq", "Show", "Data", "Typeable", "Generic"]
 
 typeDecl (VarArrayType t) = typeDecl t
-typeDecl (ArrayType tname len t) =
+typeDecl (ArrayType tname _len t) =
       text "type"
   <+> text typename
   <+> equals

@@ -2,12 +2,9 @@
 module Cidl.Backend.Haskell.Dict where
 
 import Control.Lens ((^.))
-import Data.Monoid
 import Data.List (intercalate, nub)
-import Data.Char (toUpper)
 
 import Cidl.Dict
-import Cidl.Types hiding (typeName)
 import Cidl.Backend.Haskell.Types
 import Cidl.Lens
 import Cidl.Utils

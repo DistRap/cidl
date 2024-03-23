@@ -1,7 +1,6 @@
 
 module Cidl.Backend.Ivory.Types where
 
-import Data.Monoid
 import Data.List (intercalate, nub)
 import Data.Char (toUpper, toLower)
 import Cidl.Types
@@ -242,7 +241,7 @@ typeDecl (ArrayType tname len t) =
   <+> storedType (typeImportedIvoryType t)
   where
   typename = userTypeModuleName tname
-  storedType name = parens (text "'Stored" <+> text name)
+  storedType stname = parens (text "'Stored" <+> text stname)
 
 typeDecl t@(PrimType (Newtype tname n)) = stack
   [ text "newtype" <+> text typename <+> equals
