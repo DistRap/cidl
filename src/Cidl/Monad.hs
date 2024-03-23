@@ -62,11 +62,32 @@ record n fields = RecordType n fields
 struct :: String -> [Entry] -> Type
 struct = record
 
-enum :: String -> [(Identifier, Integer)] -> Type
-enum n x = PrimType $ EnumType n Bits32 x
+-- | Create an enum type
+-- using smallest possible unsigned integer
+-- type fitting all elements
+enum
+  :: String -- ^ Enum name in snake case
+  -> [(Identifier, Integer)] -- ^ Enum values
+  -> Type
+enum enumName elems =
+    PrimType
+  $ EnumType
+      enumName
+      (smallestUint (length elems))
+      elems
+  where
+    smallestUint :: Int -> Bits
+    smallestUint numEls | numEls < 2^(8 :: Int) = Bits8
+    smallestUint numEls | numEls < 2^(16 :: Int) = Bits16
+    smallestUint numEls | numEls < 2^(32 :: Int) = Bits32
+    smallestUint _      | otherwise = Bits64
 
-ens :: Integer -> Identifier -> (Identifier, Integer)
-ens n idx = (idx, n)
+-- | Enum element
+enumVal
+  :: Integer
+  -> Identifier
+  -> (Identifier, Integer)
+enumVal n idx = (idx, n)
 
 dict :: String -> WriterT [Entry] Id () -> Dict
 dict n x = Dict
