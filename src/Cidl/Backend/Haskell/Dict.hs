@@ -1,7 +1,7 @@
 
 module Cidl.Backend.Haskell.Dict where
 
-
+import Control.Lens ((^.))
 import Data.Monoid
 import Data.List (intercalate, nub)
 import Data.Char (toUpper)
@@ -9,10 +9,10 @@ import Data.Char (toUpper)
 import Cidl.Dict
 import Cidl.Types hiding (typeName)
 import Cidl.Backend.Haskell.Types
+import Cidl.Lens
 import Cidl.Utils
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
-import Lens.Family2
 
 interfaceModule :: Bool -> [String] -> Dict -> Artifact
 interfaceModule useAeson modulepath d =
@@ -41,7 +41,7 @@ interfaceModule useAeson modulepath d =
   typeimports = map (\a -> importDecl tm a </> qualifiedImportDecl tm a)
               $ nub
               $ map importType
-              $ (d ^. dictTypes)
+              $ (d ^. types)
 
   extraimports = [ text "import Data.Serialize"
                  , text "import Data.Typeable"

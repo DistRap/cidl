@@ -6,11 +6,13 @@
 module Cidl.Monad where
 
 import MonadLib
-import Lens.Family2
+import Data.Default.Class (Default(def))
+import Control.Lens ((^.), (.~), (%~), (&))
 
 import Cidl.Types.AST
 import Cidl.Types.Base
 import Cidl.Dict
+import Cidl.Lens
 
 newtype Entries a = Entries
   { unEntries :: WriterT [Entry] Id a }
@@ -19,19 +21,14 @@ newtype Entries a = Entries
 runEntries :: Entries () -> [Entry]
 runEntries c = snd . runId $ runWriterT $ unEntries c
 
-field :: String -> Type -> Entry
-field n t = Entry
-  { _name = n
-  , _typ = t
-  , _initial = NoInit
-  , _access = ReadWrite
-  , _verbose = Nothing
-  , _pdoMappable = True
-  , _isRPDO = False
-  , _isTPDO = False
-  , _isPDOMap = False
-  , _index = 0
-  }
+field
+  :: String
+  -> Type
+  -> Entry
+field n t =
+  def
+    & name .~ n
+    & typ .~ t
 
 ro, wo, rw, const, reserved :: Entry -> Entry
 ro = access .~ Read
@@ -90,18 +87,17 @@ enumVal
 enumVal n idx = (idx, n)
 
 dict :: String -> WriterT [Entry] Id () -> Dict
-dict n x = Dict
-  { _dictName = n
-  , _dictParents = []
-  , _dictTypes = []
-  , _dictEntries = entries }
-  where entries = runEntries $ Entries x
+dict n x = 
+  def
+    & name .~ n
+    & entries .~ genEntries
+  where genEntries = runEntries $ Entries x
 
 depend :: Dict -> Dict -> Dict
-depend x = dictParents %~ (x:)
+depend x = parents %~ (x:)
 
 withTypes :: [Type] -> Dict -> Dict
-withTypes ts = dictTypes %~ (++ts)
+withTypes ts = types %~ (++ts)
 
 at :: WriterM m [Entry] => Integer -> Entry -> m ()
 at addr e = put [ (index .~ addr) e ]

@@ -5,10 +5,11 @@ import Data.Monoid
 import Data.List (intercalate, nub)
 import Data.Char (toUpper, toLower)
 import Cidl.Types
+import Cidl.Lens
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
-import Lens.Family2
+import Control.Lens ((^.))
 
 typeUmbrella :: [String] -> [Type] -> Artifact
 typeUmbrella modulepath ts =

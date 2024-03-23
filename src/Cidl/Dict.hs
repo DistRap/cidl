@@ -12,15 +12,19 @@ import Data.Ord
 import Data.List
 import Cidl.Dict.AST
 import Cidl.Types
-import Lens.Family2
+import Cidl.Lens
+import Control.Lens ((^.))
 
 allEntries :: Dict -> [Entry]
-allEntries d = concatMap allEntries (d ^. dictParents) ++ (d ^. dictEntries)
+allEntries d =
+  concatMap allEntries (d ^. parents)
+  ++ (d ^. entries)
 
 allTypes :: Dict -> [Type]
-allTypes d = nubBy (ignoreRecordInits) $
-    concatMap allTypes (d ^. dictParents)
-    ++ (d ^. dictTypes)
+allTypes d =
+  nubBy (ignoreRecordInits) 
+  $ concatMap allTypes (d ^. parents)
+    ++ (d ^. types)
     ++ entryTypes
     ++ concatMap typeLeaves entryTypes
   where
@@ -38,7 +42,7 @@ pdos d = zip comms maps
   maps = indexSort $ filter
     (\e -> e ^. isPDOMap) (allEntries d)
 
-  indexSort = sortBy (comparing _index)
+  indexSort = sortBy (comparing entryIndex)
 
 rpdos :: Dict -> [(Entry, Entry)]
 rpdos d = filter (\(p, _) -> p ^. isRPDO) (pdos d)

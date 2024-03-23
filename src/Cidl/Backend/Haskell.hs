@@ -8,9 +8,7 @@ import Cidl.Backend.Haskell.Dict
 import Ivory.Artifact
 
 import Data.Char (isSpace)
-import Data.List (nub)
 import Text.PrettyPrint.Mainland
-import Lens.Family2
 
 haskellBackend :: [Dict] -> String -> String -> [Artifact]
 haskellBackend dicts pkgname namespace_raw =

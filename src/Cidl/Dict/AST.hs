@@ -1,16 +1,23 @@
-{-# LANGUAGE TemplateHaskell #-}
 module Cidl.Dict.AST where
 
+import Data.Default.Class (Default(def))
 import Cidl.Types.AST
-import Lens.Family2.TH
 
 data Dict
   = Dict
-  { _dictName :: String
-  , _dictParents :: [Dict]
-  , _dictTypes :: [Type]
-  , _dictEntries :: [Entry]
+  { dictName :: String
+  , dictParents :: [Dict]
+  , dictTypes :: [Type]
+  , dictEntries :: [Entry]
   }
   deriving (Eq, Show)
 
-$(makeLenses ''Dict)
+instance Default Dict where
+  def =
+    Dict
+    { dictName = "default"
+    , dictParents = mempty
+    , dictTypes = mempty
+    , dictEntries = mempty
+    }
+

@@ -1,17 +1,17 @@
 
 module Cidl.Backend.Tower.Dict where
 
-
+import Control.Lens ((^.))
 import Data.List (intercalate, nub, intersperse)
 
 import Cidl.Dict
+import Cidl.Lens
 import Cidl.Types
 import Cidl.Utils
 import Cidl.Backend.Ivory.Types
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 import Text.Printf
-import Lens.Family2
 
 fmtHex :: PrintfArg t => t -> Doc
 fmtHex n = text $ printf "0x%04x" n

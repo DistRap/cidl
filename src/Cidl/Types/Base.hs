@@ -57,4 +57,3 @@ baseTypeEnv = TypeEnv
   , ( "float" , float)
   , ( "double", double)
   ]
-

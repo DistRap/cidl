@@ -2,7 +2,7 @@
 
 module Cidl.Types.AST where
 
-import Lens.Family2.TH
+import Data.Default.Class (Default(def))
 
 type Identifier = String
 type Length = Integer
@@ -40,19 +40,35 @@ data InitVal
 emptyTypeEnv :: TypeEnv
 emptyTypeEnv = TypeEnv []
 
+-- | Object dictionary entry
 data Entry = Entry
-  { _name :: String
-  , _typ :: Type
-  , _initial :: InitVal
-  , _access :: Perm
-  , _verbose :: Maybe String
-  , _pdoMappable :: Bool
-  , _isRPDO :: Bool
-  , _isTPDO :: Bool
-  , _isPDOMap :: Bool
-  , _index :: Integer
+  { entryName :: String
+  , entryTyp :: Type
+  , entryInitial :: InitVal
+  , entryAccess :: Perm
+  , entryVerbose :: Maybe String
+  , entryPdoMappable :: Bool
+  , entryIsRPDO :: Bool
+  , entryIsTPDO :: Bool
+  , entryIsPDOMap :: Bool
+  , entryIndex :: Integer
   }
   deriving (Eq, Show)
+
+instance Default Entry where
+  def =
+    Entry
+    { entryName = "default"
+    , entryTyp = PrimType (AtomType (AtomWord Bits8))
+    , entryInitial = NoInit
+    , entryAccess = ReadWrite
+    , entryVerbose = Nothing
+    , entryPdoMappable = True
+    , entryIsRPDO = False
+    , entryIsTPDO = False
+    , entryIsPDOMap = False
+    , entryIndex = 0
+    }
 
 data Type
   = RecordType String [Entry] -- RecordType in CANOpen terminology
@@ -95,6 +111,3 @@ isVarArray _ = False
 
 isComplex :: Type -> Bool
 isComplex x = isRecord x || isArray x || isVarArray x
-
-$(makeLenses ''Entry)
-

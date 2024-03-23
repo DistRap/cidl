@@ -10,11 +10,12 @@ module Cidl.Types
   , typeName
   ) where
 
-import Lens.Family2
 import Data.Tuple (swap)
 import Data.List (nub)
 import Cidl.Types.AST
 import Cidl.Types.Base
+import Cidl.Lens
+import Control.Lens ((^.))
 
 lookupTypeName :: TypeName -> TypeEnv -> Maybe Type
 lookupTypeName tn te =

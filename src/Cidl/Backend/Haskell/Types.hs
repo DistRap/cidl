@@ -1,14 +1,15 @@
 
 module Cidl.Backend.Haskell.Types where
 
+import Control.Lens ((^.))
 import Data.Monoid
 import Data.List (intercalate, nub)
 import Data.Char (toUpper)
 import Cidl.Types
+import Cidl.Lens
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
-import Lens.Family2
 
 -- invariant: only make a typeModule from a RecordType, NewtypeType, or EnumType
 -- i.e. when isUserDefined is true.
