@@ -17,6 +17,7 @@ library
                        Cidl.Types,
                        Cidl.Types.AST,
                        Cidl.Types.Base,
+                       Cidl.Types.CANOpen,
                        Cidl.Utils,
                        Cidl.Backend.Cabal,
                        Cidl.Backend.Haskell,
