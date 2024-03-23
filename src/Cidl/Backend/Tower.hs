@@ -1,13 +1,15 @@
 module Cidl.Backend.Tower where
 
+import Data.Char (isSpace)
 import Data.List (nub)
+import Text.PrettyPrint.Mainland
 
 import Ivory.Artifact
 import Ivory.Artifact.Template
 
 import Cidl.Dict
 import Cidl.Backend.Cabal
-import Cidl.Backend.Ivory (dotwords, ivorySources)
+import Cidl.Backend.Ivory.Types
 import Cidl.Backend.Tower.Dict
 
 towerBackend
@@ -65,3 +67,18 @@ makefile = artifactText "Makefile" $
     [ text "default:"
     , text "\tcabal build"
     ]
+
+ivorySources :: [Dict] -> [String] -> [Artifact]
+ivorySources dicts namespace =
+  tmods ++ [ typeUmbrella namespace userDefinedTypes ]
+  where
+  userDefinedTypes = [ t | d <- dicts, t <- allTypes d, isUserDefined t ]
+  tmods = [ typeModule (namespace ++ ["Types"]) t
+          | t <- userDefinedTypes ]
+
+dotwords :: String -> [String]
+dotwords s = case dropWhile isDot s of
+  "" -> []
+  s' -> let  (w, s'') = break isDot s' in w : dotwords s''
+  where
+  isDot c = (c == '.') || isSpace c

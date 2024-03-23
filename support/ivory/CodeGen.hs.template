@@ -1,9 +1,0 @@
-module Main where
-
-import Ivory.Compile.C.CmdlineFrontend
-import Ivory.Serialize
-
-import $module_path$.Types
-
-main :: IO ()
-main = compile (serializeModule:typeModules) serializeArtifacts
