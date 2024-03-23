@@ -54,10 +54,6 @@ data Backend
 data Opts = Opts
   { backend             :: Backend
   , outpath             :: FilePath
-  , ivoryrepo           :: FilePath
-  , towerrepo           :: FilePath
-  , ivorytowerstm32repo :: FilePath
-  , canopenrepo         :: FilePath
   , packagename         :: String
   , namespace           :: String
   , debug               :: Bool
@@ -68,10 +64,6 @@ initialOpts :: Opts
 initialOpts = Opts
   { backend             = error (usage ["must specify a backend"])
   , outpath             = error (usage ["must specify an output path"])
-  , ivoryrepo           = "ivory"
-  , towerrepo           = "tower"
-  , ivorytowerstm32repo = "ivory-tower-stm32"
-  , canopenrepo         = "ivory-tower-canopen"
   , packagename         = error (usage ["must specify a package name"])
   , namespace           = ""
   , debug               = False
