@@ -16,7 +16,6 @@ haskellBackend :: [Dict] -> String -> String -> [Artifact]
 haskellBackend dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
-  , stackfile
   ] ++
   [ artifactPath "src" m | m <- sourceMods
   ]
@@ -36,7 +35,6 @@ haskellBackend dicts pkgname namespace_raw =
 
   namespace = dotwords namespace_raw
 
-
   dotwords :: String -> [String]
   dotwords s = case dropWhile isDot s of
     "" -> []
@@ -47,21 +45,9 @@ makefile :: Artifact
 makefile = artifactText "Makefile" $
   prettyLazyText 1000 $ stack
     [ text "default:"
-    , text "\tstack --stack-yaml stack.yaml build ."
+    , text "\tcabal build ."
     , empty
     , text "test:"
-    , text "\tstack --stack-yaml stack.yaml test ."
-    , empty
-    ]
-
-stackfile :: Artifact
-stackfile = artifactText "stack.yaml" $
-  prettyLazyText 1000 $ stack
-    [ text "resolver: lts-9.1"
-    , empty
-    , text "packages:"
-    , text "- '.'"
-    , empty
-    , text "install-ghc: true"
+    , text "\tcabal test ."
     , empty
     ]

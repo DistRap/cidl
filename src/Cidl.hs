@@ -173,30 +173,11 @@ runCidl dicts = do
   opts <- parseOpts args
   when (debug opts) $ do
     putStrLn (ppShow dicts)
-  let absolutize p name = do
-        pAbs <- fmap normalise $
-                  if isRelative p
-                  then fmap (</> p) getCurrentDirectory
-                  else return p
-        ex <- doesDirectoryExist pAbs
-        when (not ex) $
-          error (usage [ "Directory \"" ++ p ++ "\" does not exist."
-                       , "Make sure that the " ++ name
-                         ++ " repository is checked out." ])
-        return pAbs
+
   b <- case backend opts of
-         HaskellBackend -> return haskellBackend
-         IvoryBackend -> do
-           ivoryAbs <- absolutize (ivoryrepo opts) "Ivory"
-           return (ivoryBackend ivoryAbs)
-         TowerBackend -> do
-           ivoryAbs           <- absolutize (ivoryrepo opts) "Ivory"
-           towerAbs           <- absolutize (towerrepo opts) "Tower"
-           ivoryTowerSTM32Abs <- absolutize (ivorytowerstm32repo opts)
-                                            "ivory-tower-stm32"
-           canopenAbs <- absolutize (canopenrepo opts)
-                                            "ivory-tower-canopen"
-           return (towerBackend ivoryAbs towerAbs ivoryTowerSTM32Abs canopenAbs)
+         HaskellBackend -> pure haskellBackend
+         IvoryBackend -> pure ivoryBackend
+         TowerBackend -> pure towerBackend
 --         RpcBackend -> return rpcBackend
 --         ElmBackend -> return elmBackend
   artifactBackend opts (b dicts (packagename opts) (namespace opts))

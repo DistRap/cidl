@@ -5,7 +5,6 @@ import Ivory.Artifact.Template
 
 import Data.Char (isSpace)
 import Data.List (intercalate)
-import Text.PrettyPrint.Mainland
 
 import qualified Paths_cidl as P
 
@@ -13,11 +12,14 @@ import Cidl.Dict
 import Cidl.Backend.Cabal
 import Cidl.Backend.Ivory.Types
 
-ivoryBackend :: FilePath -> [Dict] -> String -> String -> [Artifact]
-ivoryBackend ivoryRepo dicts pkgname namespace_raw =
+ivoryBackend
+  :: [Dict]
+  -> String
+  -> String
+  -> [Artifact]
+ivoryBackend dicts pkgname namespace_raw =
   [ cabalFileArtifact cf
   , makefile
-  , stackfile ivoryRepo
   , artifactPath "tests" $ codegenTest namespace
   ] ++ map (artifactPath "src") sources
   where
@@ -60,35 +62,6 @@ dotwords s = case dropWhile isDot s of
 makefile :: Artifact
 makefile =
   artifactCabalFileTemplate P.getDataDir "support/ivory/Makefile.template" []
-
-stackfile :: FilePath -> Artifact
-stackfile ivory = artifactText "stack.yaml" $
-  prettyLazyText 1000 $ stack
-    [ text "resolver: lts-9.1"
-    , empty
-    , text "packages:"
-    , text "- '.'"
-    , text ("- location: " ++ ivory)
-    , text "  extra-dep: true"
-    , text "  subdirs:"
-    , text "    - ivory"
-    , text "    - ivory-artifact"
-    , text "    - ivory-backend-c"
-    , text "    - ivory-opts"
-    , text "    - ivory-serialize"
-    , text "    - ivory-stdlib"
-    , empty
-    , text "extra-deps:"
-    , text "  - exception-mtl-0.4"
-    , text "  - ghc-srcspan-plugin-0.2.1.0"
-    , text "  - language-c-quote-0.11.6"
-    , text "  - mainland-pretty-0.4.1.2"
-    , text "  - symbol-0.2.4"
-    , empty
-    , text "install-ghc: true"
-    , empty
-    ]
-
 
 codegenTest :: [String] -> Artifact
 codegenTest modulepath =

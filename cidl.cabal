@@ -15,11 +15,6 @@ data-files: support/elm/Utils.elm.template,
             support/ivory/Unpack.hs.template,
             support/ivory/CodeGen.hs.template,
             support/ivory/Makefile.template,
-            support/tower/CodeGen.hs.template,
-            support/tower/Attr.hs
-            support/tower/Types.hs
-            support/tower/default.conf,
-            support/tower/Makefile.template,
             support/rpc/Base.hs.template,
             support/rpc/Makefile
 
