@@ -22,6 +22,7 @@ import Cidl.Dict
 import Cidl.Monad
 import Cidl.Types.AST
 import Cidl.Types.Base
+import Cidl.Backend.EDS
 import Cidl.Backend.Haskell
 import Cidl.Backend.Tower
 
@@ -47,7 +48,8 @@ parseOptions opts args = case getOpt Permute opts args of
   (_,_,es) -> Left es
 
 data Backend
-  = HaskellBackend
+  = EDSBackend
+  | HaskellBackend
   | TowerBackend
   deriving (Eq, Show)
 
@@ -72,9 +74,10 @@ initialOpts = Opts
 
 setBackend :: String -> OptParser Opts
 setBackend b = case map toUpper b of
-  "HASKELL"     -> success (\o -> o { backend = HaskellBackend })
-  "TOWER"       -> success (\o -> o { backend = TowerBackend })
-  _             -> invalid e
+  "EDS" -> success (\o -> o { backend = EDSBackend })
+  "HASKELL" -> success (\o -> o { backend = HaskellBackend })
+  "TOWER" -> success (\o -> o { backend = TowerBackend })
+  _ -> invalid e
   where e = "\"" ++ b ++ "\" is not a valid backend.\n"
           ++ "Supported backends: haskell, tower"
 
@@ -133,6 +136,7 @@ runCidl dicts = do
     putStrLn (ppShow dicts)
 
   b <- case backend opts of
+         EDSBackend -> pure edsBackend
          HaskellBackend -> pure haskellBackend
          TowerBackend -> pure towerBackend
   artifactBackend opts (b dicts (packagename opts) (namespace opts))

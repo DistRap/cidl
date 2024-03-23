@@ -21,6 +21,7 @@ library
                        Cidl.Types.CANOpen,
                        Cidl.Utils,
                        Cidl.Backend.Cabal,
+                       Cidl.Backend.EDS,
                        Cidl.Backend.Haskell,
                        Cidl.Backend.Haskell.Dict,
                        Cidl.Backend.Haskell.Types,
