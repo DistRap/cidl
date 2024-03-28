@@ -208,8 +208,8 @@ objdictTower d =
   attrServers =  stack
     [     lparen
       <>  onlyReadable rw (text n <> text "_get_res" <> comma)
-      <>  onlyWritable rw (text n <> text "_set_res" <> comma)
-      <>  text n <> text "_init"
+      <+>  onlyWritable rw (text n <> text "_set_res" <> comma)
+      <+>  text n <> text "_init"
       <>  rparen
       <+> text "<-"
       <+> attrServer rw
@@ -221,7 +221,7 @@ objdictTower d =
     , let rw = (e ^. access)
     ]
 
-  mirror n = text n <> text "_local <- stateInit "
+  mirror n = text n <> text "_local <- stateInit"
              <+> dquotes (text n <> text "_local")
              <+> text n <> text "_init"
 
