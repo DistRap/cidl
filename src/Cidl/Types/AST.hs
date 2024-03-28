@@ -33,7 +33,6 @@ writable _ = False
 data InitVal
   = NoInit
   | NumInit Integer
-  | NumInitOffset Integer
 --  | StrInit String
   deriving (Eq, Show)
 

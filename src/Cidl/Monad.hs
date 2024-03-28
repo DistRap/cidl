@@ -40,8 +40,6 @@ reserved = access .~ Reserved
 defaultNum :: Integer -> Entry -> Entry
 defaultNum x = initial .~ (NumInit x)
 
-defaultNumNIDOffset :: Integer -> Entry -> Entry
-defaultNumNIDOffset x = initial .~ (NumInitOffset x)
 
 array :: String -> Length -> Type -> Type
 array n len t = ArrayType n len t
@@ -125,7 +123,8 @@ identity NodeSpec{..} =
 -- ! PDOs are indexed from 1
 pdoComm :: Integer -> Integer -> Type
 pdoComm pdoOff pdoNum = record "pdo_comm_param"
-  [ field "cob_id" uint32 & defaultNumNIDOffset (pdoOff + 0x100 * (pdoNum))
+  [ field "cob_id" uint32
+      & defaultNum (pdoOff + 0x100 * pdoNum) -- + nodeId
   , field "transmission_type" uint8
   , field "inhibit_time" uint16
   , field "reserved" uint8 & reserved
@@ -192,7 +191,7 @@ baseDict nodeSpec = dict "base" $ do
   -- 0x1011 restore default parameters, array for restoring parameters
   at 0x1012 $ field "time_cob_id" uint32 & defaultNum 0x100
   at 0x1013 $ field "hr_timestamp" uint32
-  at 0x1014 $ field "emcy_cob_id" uint32 & defaultNumNIDOffset 0x80
+  at 0x1014 $ field "emcy_cob_id" uint32 & defaultNum 0x80 -- 0x80 + nodeId
   at 0x1015 $ field "emcy_inhibit_time" uint16
   --at 0x1016 $ field "consumer_heartbeat_time" (array "consumer_heartbeat" 128 uint32)
   at 0x1017 $ field "producer_heartbeat_time" uint16
@@ -281,7 +280,6 @@ reflowDict = dict "reflow" $ do
   at 0x6202 $ field "pid_d_actual" float & ro
   at 0x62FF $ field "pid_output" float & ro
 
---  TODO: handle node offset setters
 --  ConstArray
 --  OctetString
 --  VisString

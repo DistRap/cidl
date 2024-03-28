@@ -167,8 +167,6 @@ toIval :: InitVal -> Type -> Doc
 toIval (NumInit x) t@(PrimType (AtomType _)) = text "ival"
   <+> parens (fmtHex x <+> colon <> colon <+> (text $ typeIvoryType t))
 toIval (NumInit _) t = toIval NoInit t
-toIval (NumInitOffset x) t@(PrimType (AtomType _)) = toIval (NumInit x) t
-toIval (NumInitOffset _) t = toIval NoInit t
 toIval _ t@(RecordType _ es) = text "istruct"
   <+> encloseStack lbracket rbracket comma
         [ text (typeModuleName t) <> dot <> text (e ^. name) <+> text ".=" <+> toIval (e ^. initial) (e ^. typ)
