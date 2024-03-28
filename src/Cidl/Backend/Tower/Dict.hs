@@ -153,7 +153,7 @@ attrsInitializer d = typesig </> decl </> indent 2 body
             <+> constructor <+> text "Init"
   decl = text "init" <> constructor <+> equals <+> constructor
   body = encloseStack lbrace rbrace comma $
-    [ text n <+> equals <+> text "izero"
+    [ text n <+> equals <+> toIval (e ^. initial) (e ^. typ)
     | e <- allEntries d
     , let n = userEnumValueName (e ^. name)
     ]
@@ -495,7 +495,7 @@ objdictTower d =
         , text "refCopy (setres ~> setres_mux) (setmux ~> mp_mux)"
         , text "let emitError x = store (setres ~> setres_ok) false"
           <+> text ">> store (setres ~> setres_error) x"
-          <+> text ">> emit" <+> emitterName (setter_result) <+> parens (text "constRef setres")  
+          <+> text ">> emit" <+> emitterName (setter_result) <+> parens (text "constRef setres")
         , empty
         , text "cond_"
         , indent 2 $ encloseStack lbracket rbracket comma $ setConds
@@ -507,8 +507,8 @@ objdictTower d =
         stack allAttrEmitters
       , text "callback $ const $ do"
       , indent 2 $ stack [
-          text (e ^. name) <> text "_init" <+> text "<- local $" <+> toIval (e ^. initial) (e ^. typ)
-          </> text "emit" <+> emitterName (text (e ^. name)) <+> parens (text "constRef" <+> text (e ^. name) <> text "_init")
+          text (e ^. name) <> text "_inits" <+> text "<- local" <+> text (e ^. name) <> text "_init"
+          </> text "emit" <+> emitterName (text (e ^. name)) <+> parens (text "constRef" <+> text (e ^. name) <> text "_inits")
           | e <- allEntries d
         ]
       ])
