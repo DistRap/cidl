@@ -165,7 +165,7 @@ attrsInitializer d = typesig </> decl </> indent 2 body
 
 toIval :: InitVal -> Type -> Doc
 toIval (NumInit x) t@(PrimType (AtomType _)) = text "ival"
-  <+> parens (fmtHex x <> colon <> colon <> (text $ typeIvoryType t))
+  <+> parens (fmtHex x <+> colon <> colon <+> (text $ typeIvoryType t))
 toIval (NumInit _) t = toIval NoInit t
 toIval (NumInitOffset x) t@(PrimType (AtomType _)) = toIval (NumInit x) t
 toIval (NumInitOffset _) t = toIval NoInit t
