@@ -30,11 +30,11 @@ field n t =
     & name .~ n
     & typ .~ t
 
-ro, wo, rw, const, reserved :: Entry -> Entry
+ro, wo, rw, constant, reserved :: Entry -> Entry
 ro = access .~ Read
 wo = access .~ Write
 rw = access .~ ReadWrite
-const = access .~ Const
+constant = access .~ Const
 reserved = access .~ Reserved
 
 defaultNum :: Integer -> Entry -> Entry
@@ -173,6 +173,7 @@ interfaces =
   , cia401Dict
   , cia402Dict
   , reflowDict
+  , testDict
   ]
 
 baseDict :: NodeSpec -> Dict
@@ -267,8 +268,6 @@ cia402Dict = dict "cia402" $ do
     -- ^^ pid control params
     -- subindex 1 is Gain, subindex 2 is Ti - sintegration time constant
   at 0x60FF $ field "target_velocity" sint32
-  --at 0x6001 $ field "testarr" (array "testarr" 10 uint8)
-  at 0x80AA $ field "test_value" sint32
 
 reflowDict :: Dict
 reflowDict = dict "reflow" $ do
@@ -285,6 +284,52 @@ reflowDict = dict "reflow" $ do
   at 0x6201 $ field "pid_i_actual" float & ro
   at 0x6202 $ field "pid_d_actual" float & ro
   at 0x62FF $ field "pid_output" float & ro
+
+testDict :: Dict
+testDict = dict "test" $ do
+  at 0x6000 $ field "test_bool" bool
+  at 0x6001 $ field "test_u8" uint8
+  at 0x6002 $ field "test_u16" uint16
+  at 0x6003 $ field "test_u32" uint32
+  at 0x6004 $ field "test_s8" sint8
+  at 0x6005 $ field "test_s16" sint16
+  at 0x6006 $ field "test_s32" sint32
+  at 0x6007 $ field "test_float" float
+  at 0x6008 $ field "test_double" double
+
+  at 0x606C $ field "test_velocity_actual" sint32 & ro
+  at 0x60FF $ field "test_target_velocity" sint32
+
+  at 0x6100 $ field "test_ro" bool & ro
+  at 0x6101 $ field "test_constant" bool & constant
+  at 0x6102 $ field "test_reserved" bool & reserved
+  at 0x6103 $ field "test_default" uint8 & defaultNum 42
+
+  at 0x7000
+    $ field
+        "test_array"
+        (array
+          "test_array"
+          5
+          uint8
+        )
+
+  at 0x7001
+    $ field
+        "test_var_array"
+        (varArray
+          "test_var_array"
+          42
+          uint32
+        )
+
+  at 0x8000
+    $ field "test_record"
+    $ record
+        "test_record"
+        [ field "field1" uint8
+        , field "field2" sint8
+        ]
 
 --  ConstArray
 --  OctetString
