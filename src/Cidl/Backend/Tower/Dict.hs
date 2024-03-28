@@ -126,7 +126,7 @@ attrsTowerConstructor d = typesig </> decl </> indent 2 body </> indent 2 ret
     | e <- allEntries d
     , let n = userEnumValueName (e ^. name)
     ]
-  ret = text "return" <+> constructor <+> (encloseStack lbrace rbrace comma $
+  ret = text "pure" <+> constructor <+> (encloseStack lbrace rbrace comma $
     [ text n <+> equals <+> text n <> text "_p"
     | e <- allEntries d
     , let n = userEnumValueName (e ^. name)
@@ -530,7 +530,7 @@ objdictTower d =
     , attrChans
     , attrServers
     , monitor </> monitorBody
-    , text "return $ ObjDict"
+    , text "pure $ ObjDict"
       <+> (init' <> text "_in")
       <+> (getter <> text "_in")
       <+> (getter_result <> text "_out")
