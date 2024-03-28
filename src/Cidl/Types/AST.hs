@@ -83,7 +83,8 @@ data PrimType
   deriving (Eq, Show)
 
 data Atom
-  = AtomInt Bits
+  = AtomBool
+  | AtomInt Bits
   | AtomWord Bits
   | AtomFloat
   | AtomDouble

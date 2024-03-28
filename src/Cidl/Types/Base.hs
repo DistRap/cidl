@@ -35,7 +35,7 @@ sint64 :: Type
 sint64 = PrimType (AtomType (AtomInt  Bits64))
 
 bool :: Type
-bool = PrimType (EnumType "bool" Bits8 [("false", 0), ("true", 1)])
+bool = PrimType (AtomType AtomBool)
 
 float :: Type
 float = PrimType (AtomType AtomFloat)

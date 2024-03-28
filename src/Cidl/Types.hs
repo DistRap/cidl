@@ -61,6 +61,7 @@ sizeOf (ArrayType _ len t) = len * sizeOf t
 sizeOf (VarArrayType t) = sizeOf t
 sizeOf (PrimType (Newtype _ tr)) = sizeOf (PrimType tr)
 sizeOf (PrimType (EnumType _ bs _)) = bitsSize bs
+sizeOf (PrimType (AtomType AtomBool)) = bitsSize Bits8
 sizeOf (PrimType (AtomType (AtomInt bs))) = bitsSize bs
 sizeOf (PrimType (AtomType (AtomWord bs))) = bitsSize bs
 sizeOf (PrimType (AtomType AtomFloat)) = 4

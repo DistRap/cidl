@@ -91,6 +91,7 @@ primDataType (AtomType atom) = atomDataType atom
 atomDataType
   :: Atom
   -> DataType
+atomDataType AtomBool = DataType_Boolean
 atomDataType (AtomInt Bits8) = DataType_Int8
 atomDataType (AtomInt Bits16) = DataType_Int16
 atomDataType (AtomInt Bits32) = DataType_Int32

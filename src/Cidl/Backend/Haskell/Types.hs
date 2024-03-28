@@ -54,6 +54,7 @@ typeHaskellType (VarArrayType t) = typeHaskellType t
 typeHaskellType (PrimType (Newtype tn _)) = userTypeModuleName tn
 typeHaskellType (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeHaskellType (PrimType  (AtomType a)) = case a of
+  AtomBool -> "Bool"
   AtomInt Bits8  -> "Int8"
   AtomInt Bits16 -> "Int16"
   AtomInt Bits32 -> "Int32"
@@ -240,8 +241,8 @@ typePutter struct = text "put" <> text (typeModuleName struct)
 
 primTypePutter :: PrimType -> Doc
 primTypePutter (Newtype tn _) = text "put" <> text (userTypeModuleName tn)
-primTypePutter (EnumType "bool" _ _) = text "put"
 primTypePutter (EnumType tn _ _) = text "put" <> text (userTypeModuleName tn)
+primTypePutter (AtomType AtomBool) = text "put"
 primTypePutter (AtomType (AtomInt _)) = text "put"
 primTypePutter (AtomType (AtomWord Bits8)) = text "putWord8"
 primTypePutter (AtomType (AtomWord Bits16)) = text "putWord16le"
@@ -250,15 +251,14 @@ primTypePutter (AtomType (AtomWord Bits64)) = text "putWord64le"
 primTypePutter (AtomType AtomFloat) = text "putFloat32le"
 primTypePutter (AtomType AtomDouble) = text "putFloat64le"
 
-
 typeGetter :: Type -> Doc
 typeGetter (PrimType p) = primTypeGetter p
 typeGetter struct = text "get" <> text (typeModuleName struct)
 
 primTypeGetter :: PrimType -> Doc
 primTypeGetter (Newtype tn _) = text "get" <> text (userTypeModuleName tn)
-primTypeGetter (EnumType "bool" _ _) = text "get"
 primTypeGetter (EnumType tn _ _) = text "get" <> text (userTypeModuleName tn)
+primTypeGetter (AtomType AtomBool) = text "get"
 primTypeGetter (AtomType (AtomInt _)) = text "get"
 primTypeGetter (AtomType (AtomWord Bits8)) = text "getWord8"
 primTypeGetter (AtomType (AtomWord Bits16)) = text "getWord16le"
@@ -282,7 +282,6 @@ importType :: Type -> ImportType
 importType (RecordType n _) = UserType n
 importType (ArrayType n _ _) = UserType n
 importType (VarArrayType t) = importType t
-importType (PrimType (EnumType "bool" _ _)) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n
 importType (PrimType (AtomType a)) =
