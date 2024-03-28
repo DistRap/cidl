@@ -65,6 +65,8 @@ makefile = artifactText "Makefile" $
   prettyLazyText 1000 $ stack
     [ text "default:"
     , text "\tcabal build"
+    , text "clean:"
+    , text "\tcabal clean"
     ]
 
 ivorySources :: [Dict] -> [String] -> [Artifact]

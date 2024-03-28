@@ -44,8 +44,8 @@ makefile = artifactText "Makefile" $
   prettyLazyText 1000 $ stack
     [ text "default:"
     , text "\tcabal build ."
-    , empty
+    , text "clean:"
+    , text "\tcabal clean"
     , text "test:"
     , text "\tcabal test ."
-    , empty
     ]
