@@ -71,7 +71,8 @@ dictModule modulepath d =
   tm mname = modAt (rootpath modulepath ++ ["Ivory","Types", mname])
 
   imports =
-    [ text "import Ivory.Language"
+    [ text "import Data.Kind (Type)"
+    , text "import Ivory.Language"
     , text "import Ivory.Stdlib"
     , text "import Ivory.Tower"
     , text "import Ivory.Serialize.LittleEndian"
@@ -84,9 +85,8 @@ dictModule modulepath d =
               $ map importType
               $ allTypes d
 
-
 attrsDataType :: Dict -> Doc
-attrsDataType d = text "data" <+> constructor <+> text "(p :: Area * -> *) ="
+attrsDataType d = text "data" <+> constructor <+> text "(p :: Area Type -> Type) ="
                </> indent 2 constructor
                </> indent 4 body
   where
