@@ -40,20 +40,22 @@ reserved = access .~ Reserved
 defaultNum :: Integer -> Entry -> Entry
 defaultNum x = initial .~ (NumInit x)
 
-
+-- | Fixed size array
 array :: String -> Length -> Type -> Type
 array n len t = ArrayType n len t
 
+-- | Variable size array
 varArray :: [Char] -> Length -> Type -> Type
 varArray n len t = VarArrayType $ record ("var_array_" ++ n)
     [ field "arrayLengthL" uint8
     , field "arrayDataL" (array n len t)
     ]
 
+-- | CANOpen Record type
 record :: String -> [Entry] -> Type
 record n fields = RecordType n fields
 
--- just an alias
+-- | @record@ alias
 struct :: String -> [Entry] -> Type
 struct = record
 
@@ -84,19 +86,24 @@ enumVal
   -> (Identifier, Integer)
 enumVal n idx = (idx, n)
 
+-- | Create a CANOpen dictionary
 dict :: String -> WriterT [Entry] Id () -> Dict
-dict n x = 
+dict n x =
   def
     & name .~ n
     & entries .~ genEntries
   where genEntries = runEntries $ Entries x
 
+-- | Make this dictionary depend on another
+-- dictionary
 depend :: Dict -> Dict -> Dict
 depend x = parents %~ (x:)
 
+-- | Generate additional types
 withTypes :: [Type] -> Dict -> Dict
 withTypes ts = types %~ (++ts)
 
+-- | Create a dictionary entry at some address
 at :: WriterM m [Entry] => Integer -> Entry -> m ()
 at addr e = put [ (index .~ addr) e ]
 
@@ -139,7 +146,6 @@ rpdo = pdoComm 0x100
 
 pdoMap :: Type
 pdoMap = varArray "pdo_comm_map" 8 uint32
---pdoMap = varArray "pdo_comm_map" 64 uint32
 
 rpdoCommField :: Integer -> Entry
 rpdoCommField n = field ("rpdo" ++ show n ++ "_params") (rpdo n) & (isRPDO .~ True)
@@ -286,7 +292,7 @@ reflowDict = dict "reflow" $ do
 --  UnicodeString
 --   -- TimeDifference requires bits
 --
---  disallow complex complex types in objdict - arrays of arrays, records of records
+--  disallow complex types in objdict - arrays of arrays, records of records
 --  check for conflicting names/indexes
 --  validators
 --  feed identity with NodeSpec
