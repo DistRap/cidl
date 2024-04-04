@@ -6,8 +6,7 @@ module Cidl
   , module Cidl.Types.Base
   ) where
 
-import Prelude ()
-import Prelude.Compat
+import Prelude
 
 import Data.Char
 import Data.Maybe (catMaybes)
