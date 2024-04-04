@@ -107,12 +107,22 @@ withTypes ts = types %~ (++ts)
 at :: WriterM m [Entry] => Integer -> Entry -> m ()
 at addr e = put [ (index .~ addr) e ]
 
+-- | Node identity specification
 data NodeSpec = NodeSpec
   { vendorId :: Integer
   , productCode :: Integer
   , revisionNumber :: Integer
   , serialNumber :: Integer
   }
+
+instance Default NodeSpec where
+  def =
+    NodeSpec
+    { vendorId = 0x13
+    , productCode = 0x37
+    , revisionNumber = 0x0
+    , serialNumber = 0x1337
+    }
 
 identity :: NodeSpec -> Type
 identity NodeSpec{..} =
@@ -159,17 +169,9 @@ rpdoMapField n = field ("rpdo" ++ show n ++ "_map") pdoMap & (isRPDO .~ True) & 
 tpdoMapField :: Show a => a -> Entry
 tpdoMapField n = field ("tpdo" ++ show n ++ "_map") pdoMap & (isTPDO .~ True) & (isPDOMap .~ True)
 
-spec :: NodeSpec
-spec = NodeSpec
-  { vendorId = 0x48
-  , productCode = 0x1
-  , revisionNumber = 0x0
-  , serialNumber = 0x1337
-  }
-
 interfaces :: [Dict]
 interfaces =
-  [ commsDict spec
+  [ commsDict def
   , cia401Dict
   , cia402Dict
   , reflowDict
