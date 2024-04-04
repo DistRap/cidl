@@ -2,13 +2,14 @@
 module Cidl.Backend.Ivory.Types where
 
 import Data.List (intercalate, nub)
-import Data.Char (toUpper, toLower)
 import Cidl.Types
 import Cidl.Lens
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 import Control.Lens ((^.))
+
+import qualified Cidl.Utils
 
 typeUmbrella :: [String] -> [Type] -> Artifact
 typeUmbrella modulepath ts =
@@ -154,27 +155,20 @@ typeModuleName (PrimType (EnumType tn _ _)) = userTypeModuleName tn
 typeModuleName (PrimType (AtomType _)) = error "do not take typeModuleName of an AtomType"
 
 userTypeModuleName :: String -> String
-userTypeModuleName = first_cap . userEnumValueName
-  where
-  first_cap (s:ss) = (toUpper s) : ss
-  first_cap []     = []
+userTypeModuleName =
+    Cidl.Utils.firstCap
+  . userEnumValueName
 
 userEnumValueName :: String -> String
-userEnumValueName = first_lower . u_to_camel
-  where
-  first_lower (s:ss) = (toLower s) : ss
-  first_lower []     = []
-  u_to_camel ('_':'t':[]) = []
-  u_to_camel ('_':[]) = []
-  u_to_camel ('_':a:as) = (toUpper a) : u_to_camel as
-  u_to_camel (a:as) = a : u_to_camel as
-  u_to_camel [] = []
+userEnumValueName =
+    Cidl.Utils.firstLower
+  . Cidl.Utils.snakeToCamel
 
 userTypeStructName :: String -> String
-userTypeStructName = first_lower . drop_t_suffix
+userTypeStructName =
+    Cidl.Utils.firstLower
+  . drop_t_suffix
   where
-  first_lower (s:ss) = (toLower s) : ss
-  first_lower []     = []
   drop_t_suffix []     = []
   drop_t_suffix ('_':'t':[]) = []
   drop_t_suffix (a:as) = a : drop_t_suffix as
