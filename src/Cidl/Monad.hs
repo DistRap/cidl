@@ -169,15 +169,17 @@ spec = NodeSpec
 
 interfaces :: [Dict]
 interfaces =
-  [ baseDict spec
+  [ commsDict spec
   , cia401Dict
   , cia402Dict
   , reflowDict
   , testDict
   ]
 
-baseDict :: NodeSpec -> Dict
-baseDict nodeSpec = dict "base" $ do
+-- | Dict representing communications dictionary
+-- common for all devices
+commsDict :: NodeSpec -> Dict
+commsDict nodeSpec = dict "base" $ do
   at 0x1000 $ field "device_type" uint32 & ro
   at 0x1001 $ field "error_register" uint8 & ro
   at 0x1002 $ field "manufacturer_status_register" uint32 & ro
