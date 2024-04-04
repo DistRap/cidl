@@ -35,7 +35,7 @@ library
                        pretty-show,
                        ivory-artifact,
                        lens,
-                       monadLib
+                       monadLib,
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall -Wunused-packages

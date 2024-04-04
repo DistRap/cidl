@@ -238,7 +238,7 @@ objdictTower d =
 
   condAddr addr = text "address ==?" <+> fmtHex addr <+> text "==> do"
   condSub subindex = text "subindex ==?" <+> integer subindex <+> text "==> do"
-  condArray len = text "subindex >=? 1 .&& subindex <=?" <+> integer len <+> text "==> do"
+  condArray len = text "subindex >=? 1 .&& subindex <=?" <+> int len <+> text "==> do"
 
   packCbVar n = stack [
       text "let sz = packsize" <+> parens (callbackVar n)
@@ -280,7 +280,7 @@ objdictTower d =
     , text "subindex <- getmux ~>* sub"
     , text "cond_"
     , indent 2 $ encloseStack lbracket rbracket comma $
-      [ condSub 0 </> (indent 4 $ packSize (fromInteger len))
+      [ condSub 0 </> (indent 4 $ packSize len)
       , condArray len
           </> (indent 4 $ packArrayVar $ text n)
       , text "true ==> do" </> (indent 4 $ text "emitError subindexNotFound")

@@ -3,6 +3,7 @@
 module Cidl.Types.CANOpen
   ( ObjectType(..)
   , DataType(..)
+  , CANOpenType(..)
   , toCANOpenType
   ) where
 
@@ -73,7 +74,7 @@ toCANOpenType
   :: Type
   -> CANOpenType
 toCANOpenType (RecordType _ _)
-  = CANOpenType ObjectType_DefStruct Nothing
+  = CANOpenType ObjectType_Record Nothing
 toCANOpenType (ArrayType _ _ _)
   = CANOpenType ObjectType_Array Nothing
 toCANOpenType (VarArrayType _ )

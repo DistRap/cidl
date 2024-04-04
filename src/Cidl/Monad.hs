@@ -155,7 +155,7 @@ rpdo :: Integer -> Type
 rpdo = pdoComm 0x100
 
 pdoMap :: Type
-pdoMap = varArray "pdo_comm_map" 8 uint32
+pdoMap = array "pdo_comm_map" 8 uint32
 
 rpdoCommField :: Integer -> Entry
 rpdoCommField n = field ("rpdo" ++ show n ++ "_params") (rpdo n) & (isRPDO .~ True)

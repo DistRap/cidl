@@ -228,7 +228,7 @@ typeDecl (ArrayType tname len t) =
   <+> text typename
   <+> equals
   <+> text "'Array"
-  <+> integer len
+  <+> int len
   <+> storedType (typeImportedIvoryType t)
   where
   typename = userTypeModuleName tname

@@ -5,7 +5,7 @@ module Cidl.Types.AST where
 import Data.Default.Class (Default(def))
 
 type Identifier = String
-type Length = Integer
+type Length = Int
 type TypeName = String
 data TypeEnv
   = TypeEnv [(TypeName, Type)]
