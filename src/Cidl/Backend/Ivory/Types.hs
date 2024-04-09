@@ -21,6 +21,7 @@ typeUmbrella modulepath ts =
     , text "module" <+> typeModulePath modulepath "Types" <+> text "where"
     , empty
     , text "import Ivory.Language"
+    , text "import Ivory.Tower"
     , stack
         [ importDecl (typeModulePath (modulepath ++ ["Types"])) (importType t)
         | t <- ts ]
@@ -28,6 +29,13 @@ typeUmbrella modulepath ts =
     , text "typeModules :: [Module]"
     ]
     ++ maybeTypeModules
+    ++
+    [ empty
+    , text "towerDeps :: Tower e ()"
+    , text "towerDeps = do"
+    , text "  mapM_ towerModule typeModules"
+    , text "  mapM_ towerDepends typeModules"
+    ]
   where
     -- in case there's only an array defined, this can
     -- end up (m)empty, preserve for now but maybe skip
