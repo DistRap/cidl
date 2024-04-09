@@ -306,8 +306,7 @@ testDict = dict "test" $ do
 
   at 0x6100 $ field "test_ro" bool & ro
   at 0x6101 $ field "test_constant" bool & constant
-  at 0x6102 $ field "test_reserved" bool & reserved
-  at 0x6103 $ field "test_default" uint8 & defaultNum 42
+  at 0x6102 $ field "test_default" uint8 & defaultNum 42
 
   at 0x7000
     $ field
