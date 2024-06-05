@@ -9,8 +9,11 @@ import Cidl.Utils
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 
-interfaceModule :: Bool -> [String] -> Dict -> Artifact
-interfaceModule useAeson modulepath dict =
+interfaceModule
+  :: [String]
+  -> Dict
+  -> Artifact
+interfaceModule modulepath dict =
   artifactPath (intercalate "/" modulepath) $
   artifactText ((dictModuleName dict) ++ ".hs") $
   prettyLazyText 1000 $
@@ -24,26 +27,30 @@ interfaceModule useAeson modulepath dict =
       <+> text "where"
     , empty
     , stack
-        $  extraImports
-        ++ typeImports
+        typeImports
+    , text "import Network.CANOpen.Types"
     , empty
     ]
   where
-  im mname = mconcat $ punctuate dot
-                     $ map text (modulepath ++ [mname])
-  tm mname = mconcat $ punctuate dot
-                     $ map text (typepath modulepath ++ ["Types", mname])
-    where typepath = reverse . drop 1 . reverse
+  im mname =
+    mconcat
+    $ punctuate dot
+    $ map
+        text
+        (modulepath ++ [mname])
 
-  typeImports = map (\a -> importDecl tm a </> qualifiedImportDecl tm a)
-              $ nub
-              $ map importType
-              $ allTypes dict
+  tm mname =
+    mconcat
+    $ punctuate dot
+    $ map
+        text
+        (typepath modulepath ++ ["Types", mname])
+    where
+    typepath = reverse . drop 1 . reverse
 
-  extraImports = [ text "import Data.Serialize"
-                 , text "import Data.Typeable"
-                 , text "import Data.Data"
-                 , text "import GHC.Generics (Generic)"
-                 , text "import qualified Test.QuickCheck as Q"
-                 ] ++
-                 [ text "import Data.Aeson (ToJSON,FromJSON)" | useAeson ]
+  typeImports =
+    map
+      (\a -> importDecl tm a </> qualifiedImportDecl tm a)
+    $ nub
+    $ map importType
+    $ allTypes dict

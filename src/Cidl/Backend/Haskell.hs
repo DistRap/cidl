@@ -22,7 +22,7 @@ haskellBackend dicts pkgname namespace_raw =
   tmods = [ typeModule False (namespace ++ ["Types"]) t
           | t <- userDefinedTypes
           ]
-  imods = [ interfaceModule False (namespace ++ ["Interface"]) d
+  imods = [ interfaceModule (namespace ++ ["Interface"]) d
           | d <- dicts
           ]
   sourceMods = tmods ++ imods
