@@ -28,7 +28,11 @@ haskellBackend dicts pkgname namespace_raw =
   sourceMods = tmods ++ imods
   cf = defaultCabalFile pkgname cabalmods deps
   cabalmods = [ filePathToPackage (artifactFileName m) | m <- sourceMods ]
-  deps = [ "cereal", "QuickCheck" ]
+  deps =
+    [ "cereal"
+    , "QuickCheck"
+    , "network-canopen"
+    ]
 
   namespace = dotwords namespace_raw
 
