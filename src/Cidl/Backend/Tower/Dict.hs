@@ -11,10 +11,6 @@ import Cidl.Utils
 import Cidl.Backend.Ivory.Types
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
-import Text.Printf
-
-fmtHex :: PrintfArg t => t -> Doc
-fmtHex n = text $ printf "0x%04x" n
 
 umbrellaModule :: [String] -> Dict -> Artifact
 umbrellaModule modulepath d =
@@ -165,7 +161,7 @@ attrsInitializer d = typesig </> decl </> indent 2 body
 
 toIval :: InitVal -> Type -> Doc
 toIval (NumInit x) t@(PrimType (AtomType _)) = text "ival"
-  <+> parens (fmtHex x <+> colon <> colon <+> (text $ typeIvoryType t))
+  <+> parens (text (fmtHex x) <+> colon <> colon <+> (text $ typeIvoryType t))
 toIval (NumInit _) t = toIval NoInit t
 toIval _ t@(RecordType _ es) = text "istruct"
   <+> encloseStack lbracket rbracket comma
@@ -236,7 +232,7 @@ objdictTower d =
     <+> n
     <+> dquotes (n <> text "_handler") <+> text "$ do"
 
-  condAddr addr = text "address ==?" <+> fmtHex addr <+> text "==> do"
+  condAddr addr = text "address ==?" <+> text (fmtHex addr) <+> text "==> do"
   condSub subindex = text "subindex ==?" <+> integer subindex <+> text "==> do"
   condArray len = text "subindex >=? 1 .&& subindex <=?" <+> int len <+> text "==> do"
 

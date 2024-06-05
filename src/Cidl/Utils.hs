@@ -3,10 +3,13 @@ module Cidl.Utils
   , firstCap
   , firstLower
   , snakeToCamel
+  , fmtHex
   ) where
 
-import qualified Data.Char
 import Control.Lens ((^.))
+import Text.Printf (PrintfArg)
+import qualified Data.Char
+import qualified Text.Printf
 
 import Cidl.Dict
 import Cidl.Lens
@@ -39,3 +42,11 @@ snakeToCamel ('_':a:as) =
 snakeToCamel (a:as) =
   a : snakeToCamel as
 snakeToCamel [] = []
+
+fmtHex
+  :: PrintfArg t
+  => t
+  -> String
+fmtHex =
+  Text.Printf.printf
+    "0x%04x"

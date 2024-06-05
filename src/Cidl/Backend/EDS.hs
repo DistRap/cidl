@@ -6,7 +6,6 @@ import Cidl.Types.AST (Entry(..), Perm(..), Type(..))
 import Cidl.Types.CANOpen (CANOpenType(..))
 import Data.Default.Class (Default(def))
 import Ivory.Artifact (Artifact)
-import Text.Printf (PrintfArg)
 
 import qualified Cidl.Dict
 import qualified Cidl.Monad
@@ -15,7 +14,6 @@ import qualified Cidl.Types.CANOpen
 import qualified Cidl.Utils
 import qualified Data.List
 import qualified Ivory.Artifact
-import qualified Text.Printf
 
 edsBackend :: [Dict] -> String -> String -> [Artifact]
 edsBackend dicts _pkgname _namespace_raw =
@@ -41,7 +39,7 @@ edsBackend dicts _pkgname _namespace_raw =
   buildEntries e@Entry{..} =
     let
       -- object indices are w/o 0x
-      strIdx = drop 2 $ fmtHex entryIndex
+      strIdx = drop 2 $ Cidl.Utils.fmtHex entryIndex
     in
     case entryTyp of
       RecordType _recordName subEntries ->
@@ -103,7 +101,7 @@ edsBackend dicts _pkgname _namespace_raw =
            $ entryName
          )
        , ("ObjectType"
-         , fmtHex $ fromEnum $ canOpenTypeObjectType
+         , Cidl.Utils.fmtHex $ fromEnum $ canOpenTypeObjectType
          )
        , ("AccessType"
          , buildPerm entryAccess
@@ -115,7 +113,7 @@ edsBackend dicts _pkgname _namespace_raw =
             mempty
             (\dt ->
                pure ("DataType"
-                    , fmtHex $ fromEnum $ dt
+                    , Cidl.Utils.fmtHex $ fromEnum $ dt
                     )
             )
             canOpenTypeDataType
@@ -140,14 +138,6 @@ edsBackend dicts _pkgname _namespace_raw =
   buildPerm ReadWrite = "rw"
   buildPerm Const = "const"
   buildPerm Reserved = buildPerm Const
-
-fmtHex
-  :: PrintfArg t
-  => t
-  -> String
-fmtHex =
-  Text.Printf.printf
-    "0x%04x"
 
 data Ini =
     IniSection
