@@ -1,13 +1,16 @@
-
+{-# LANGUAGE RecordWildCards #-}
 module Cidl.Backend.Haskell.Dict where
 
 import Data.List (intercalate, nub)
 
-import Cidl.Dict
+import Cidl.Dict (Dict)
 import Cidl.Backend.Haskell.Types
+import Cidl.Types.AST (Entry(..), Perm(..), Type(..))
 import Cidl.Utils
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
+
+import qualified Cidl.Dict
 
 interfaceModule
   :: [String]
@@ -30,6 +33,7 @@ interfaceModule modulepath dict =
         typeImports
     , text "import Network.CANOpen.Types"
     , empty
+    , dictVarsAndFunctions dict
     ]
   where
   im mname =
@@ -53,4 +57,55 @@ interfaceModule modulepath dict =
       (\a -> importDecl tm a </> qualifiedImportDecl tm a)
     $ nub
     $ map importType
-    $ allTypes dict
+    $ Cidl.Dict.allTypes dict
+
+dictVarsAndFunctions
+  :: Dict
+  -> Doc
+dictVarsAndFunctions dict =
+  stack
+    [ variable entry
+    | entry <- Cidl.Dict.allEntries dict ]
+
+variable
+  :: Entry
+  -> Doc
+variable Entry{..} =
+  let
+    camelName = Cidl.Utils.snakeToCamel entryName
+    capName = Cidl.Utils.firstCap camelName
+  in
+  case entryTyp of
+    PrimType _primType ->
+      stack
+      [     text camelName
+        <+> text ":: Variable"
+        <+> text (typeHaskellType entryTyp)
+      ,     text camelName
+        <+> equals
+        <+> text "Variable"
+      , indent 2
+          $ encloseStack
+              lbrace
+              rbrace
+              comma
+              [     text "variableName"
+                <+> equals
+                <+> dquotes (text capName)
+              ,     text "variableMux"
+                <+> equals
+                <+> text "Mux"
+                <+> text (Cidl.Utils.fmtHex entryIndex)
+                <+> text "0"
+              ,     text "variablePerm"
+                <+> equals
+                <+> buildPerm entryAccess
+              ]
+      ]
+
+    _ -> empty
+
+buildPerm :: Perm -> Doc
+buildPerm p =
+     text "Permission_"
+  <> text (show p)
