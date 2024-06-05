@@ -1,20 +1,18 @@
 
 module Cidl.Backend.Haskell.Dict where
 
-import Control.Lens ((^.))
 import Data.List (intercalate, nub)
 
 import Cidl.Dict
 import Cidl.Backend.Haskell.Types
-import Cidl.Lens
 import Cidl.Utils
 import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 
 interfaceModule :: Bool -> [String] -> Dict -> Artifact
-interfaceModule useAeson modulepath d =
+interfaceModule useAeson modulepath dict =
   artifactPath (intercalate "/" modulepath) $
-  artifactText ((dictModuleName d) ++ ".hs") $
+  artifactText ((dictModuleName dict) ++ ".hs") $
   prettyLazyText 1000 $
   stack $
     [ text "{-# LANGUAGE DeriveDataTypeable #-}"
@@ -22,10 +20,12 @@ interfaceModule useAeson modulepath d =
     , text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
     , empty
     , text "module"
-      <+> im (dictModuleName d)
+      <+> im (dictModuleName dict)
       <+> text "where"
     , empty
-    , stack $ typeimports ++ extraimports
+    , stack
+        $  extraImports
+        ++ typeImports
     , empty
     ]
   where
@@ -35,12 +35,12 @@ interfaceModule useAeson modulepath d =
                      $ map text (typepath modulepath ++ ["Types", mname])
     where typepath = reverse . drop 1 . reverse
 
-  typeimports = map (\a -> importDecl tm a </> qualifiedImportDecl tm a)
+  typeImports = map (\a -> importDecl tm a </> qualifiedImportDecl tm a)
               $ nub
               $ map importType
-              $ (d ^. types)
+              $ allTypes dict
 
-  extraimports = [ text "import Data.Serialize"
+  extraImports = [ text "import Data.Serialize"
                  , text "import Data.Typeable"
                  , text "import Data.Data"
                  , text "import GHC.Generics (Generic)"
