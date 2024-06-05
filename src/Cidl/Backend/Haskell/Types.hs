@@ -32,6 +32,7 @@ typeModule useAeson modulepath t =
               , text "import Data.Typeable"
               , text "import Data.Data"
               , text "import GHC.Generics (Generic)"
+              , text "import Network.CANOpen.Serialize (CSerialize(..))"
               , text "import qualified Test.QuickCheck as Q"
               ])
     , empty
@@ -85,9 +86,15 @@ userTypeModuleName = first_cap . u_to_camel
   u_to_camel (a:as) = a : u_to_camel as
   u_to_camel [] = []
 
-serializeInstance :: TypeName -> Doc
-serializeInstance tname = stack
-  [ text "instance Serialize" <+> text tname <+> text "where"
+serializeInstance
+  :: String
+  -> TypeName
+  -> Doc
+serializeInstance instanceName tname = stack
+  [     text "instance"
+    <+> text instanceName
+    <+> text tname
+    <+> text "where"
   , indent 2 $ stack
       [ text "put" <+> equals <+> text ("put" ++ tname)
       , text "get" <+> equals <+> text ("get" ++ tname)
@@ -135,7 +142,8 @@ typeDecl t@(RecordType _ es) = stack
       | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
   , empty
-  , serializeInstance tname
+  , serializeInstance "Serialize" tname
+  , serializeInstance "CSerialize" tname
   , empty
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
@@ -176,7 +184,8 @@ typeDecl t@(PrimType (Newtype _ n)) = stack
       [ text "a <-" <+> primTypeGetter n
       , text "return" <+> parens (text tname <+> text "a") ]
   , empty
-  , serializeInstance tname
+  , serializeInstance "Serialize" tname
+  , serializeInstance "CSerialize" tname
   , empty
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
@@ -220,7 +229,8 @@ typeDecl t@(PrimType (EnumType _ s es)) = stack
           ] ++ [text "_ -> fail \"invalid value in get"  <> text tname <> text"\"" ]
       ]
   , empty
-  , serializeInstance tname
+  , serializeInstance "Serialize" tname
+  , serializeInstance "CSerialize" tname
   , empty
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals
@@ -242,8 +252,11 @@ typePutter struct = text "put" <> text (typeModuleName struct)
 primTypePutter :: PrimType -> Doc
 primTypePutter (Newtype tn _) = text "put" <> text (userTypeModuleName tn)
 primTypePutter (EnumType tn _ _) = text "put" <> text (userTypeModuleName tn)
-primTypePutter (AtomType AtomBool) = text "put"
-primTypePutter (AtomType (AtomInt _)) = text "put"
+primTypePutter (AtomType AtomBool) = text "Network.CANOpen.Serialize.put"
+primTypePutter (AtomType (AtomInt Bits8)) = text "putInt8"
+primTypePutter (AtomType (AtomInt Bits16)) = text "putInt16le"
+primTypePutter (AtomType (AtomInt Bits32)) = text "putInt32le"
+primTypePutter (AtomType (AtomInt Bits64)) = text "putInt64le"
 primTypePutter (AtomType (AtomWord Bits8)) = text "putWord8"
 primTypePutter (AtomType (AtomWord Bits16)) = text "putWord16le"
 primTypePutter (AtomType (AtomWord Bits32)) = text "putWord32le"
@@ -258,8 +271,11 @@ typeGetter struct = text "get" <> text (typeModuleName struct)
 primTypeGetter :: PrimType -> Doc
 primTypeGetter (Newtype tn _) = text "get" <> text (userTypeModuleName tn)
 primTypeGetter (EnumType tn _ _) = text "get" <> text (userTypeModuleName tn)
-primTypeGetter (AtomType AtomBool) = text "get"
-primTypeGetter (AtomType (AtomInt _)) = text "get"
+primTypeGetter (AtomType AtomBool) = text "Network.CANOpen.Serialize.get"
+primTypeGetter (AtomType (AtomInt Bits8)) = text "getInt8"
+primTypeGetter (AtomType (AtomInt Bits16)) = text "getInt16le"
+primTypeGetter (AtomType (AtomInt Bits32)) = text "getInt32le"
+primTypeGetter (AtomType (AtomInt Bits64)) = text "getInt64le"
 primTypeGetter (AtomType (AtomWord Bits8)) = text "getWord8"
 primTypeGetter (AtomType (AtomWord Bits16)) = text "getWord16le"
 primTypeGetter (AtomType (AtomWord Bits32)) = text "getWord32le"
