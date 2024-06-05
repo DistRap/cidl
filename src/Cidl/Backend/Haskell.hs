@@ -21,7 +21,6 @@ haskellBackend dicts pkgname namespace_raw =
   userDefinedTypes = [ t | d <- dicts, t <- allTypes d, isUserDefined t ]
   tmods = [ typeModule False (namespace ++ ["Types"]) t
           | t <- userDefinedTypes
-          --, isUserDefined t
           ]
   imods = [ interfaceModule False (namespace ++ ["Interface"]) d
           | d <- dicts

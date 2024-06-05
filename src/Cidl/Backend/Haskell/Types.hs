@@ -280,8 +280,8 @@ data ImportType = LibraryType String
 
 importType :: Type -> ImportType
 importType (RecordType n _) = UserType n
-importType (ArrayType n _ _) = UserType n
-importType (VarArrayType t) = importType t
+importType (ArrayType _ _ t) = importType t
+importType (VarArrayType _t) = NoImport
 importType (PrimType (EnumType n _ _)) = UserType n
 importType (PrimType (Newtype n _)) = UserType n
 importType (PrimType (AtomType a)) =
