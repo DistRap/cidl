@@ -334,6 +334,16 @@ testDict = dict "test" $ do
         , field "field2" sint8
         ]
 
+  at 0x9000
+    $ field
+        "test_enum"
+        $ enum
+            "enum_type"
+            [ enumVal 0 "zero_val"
+            , enumVal 1 "one_val"
+            , enumVal 2 "two_val"
+            ]
+
 --  ConstArray
 --  OctetString
 --  VisString
