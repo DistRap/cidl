@@ -29,6 +29,13 @@ field n t =
   def
     & name .~ n
     & typ .~ t
+    -- if this is a record, make it read only
+    -- since the parent field just returns count
+    -- of sub-entries
+    & (case t of
+        RecordType _ _ -> ro
+        _ -> id
+      )
 
 ro, wo, rw, constant, reserved :: Entry -> Entry
 ro = access .~ Read
@@ -206,7 +213,7 @@ commsDict nodeSpec = dict "base" $ do
   at 0x1015 $ field "emcy_inhibit_time" uint16
   --at 0x1016 $ field "consumer_heartbeat_time" (array "consumer_heartbeat" 128 uint32)
   at 0x1017 $ field "producer_heartbeat_time" uint16
-  at 0x1018 $ field "identity" (identity nodeSpec) & ro
+  at 0x1018 $ field "identity" (identity nodeSpec)
   -- 0x1019 to 0x11FF reserved
 
   -- 0x1200 1st server SDO parameter sdo_commpar_t
