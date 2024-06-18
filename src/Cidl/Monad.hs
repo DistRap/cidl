@@ -142,6 +142,7 @@ identity NodeSpec{..} =
     mkfield (x, defNum) =
       field x uint32
         & defaultNum defNum
+        & ro
 
 -- PDO communication parameters
 -- ! PDOs are indexed from 1
