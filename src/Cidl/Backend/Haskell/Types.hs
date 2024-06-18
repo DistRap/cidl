@@ -10,6 +10,8 @@ import Ivory.Artifact
 import Text.PrettyPrint.Mainland
 import Text.PrettyPrint.Mainland.Class
 
+import qualified Cidl.Utils
+
 -- invariant: only make a typeModule from a RecordType, NewtypeType, or EnumType
 -- i.e. when isUserDefined is true.
 typeModule :: Bool -> [String] -> Type -> Artifact
@@ -122,23 +124,24 @@ fromJSONInstance :: TypeName -> Doc
 fromJSONInstance tname = nest 2 (text "instance FromJSON" <+> text tname)
 
 typeDecl :: Type -> Doc
-typeDecl t@(RecordType _ es) = stack
+typeDecl t@(RecordType _ es) =
+  stack
   [ text "data" <+> text tname <+> equals
   , indent 2 $ text tname
   , indent 4 $ encloseStack lbrace (rbrace <+> deriv) comma
-      [ text (e ^. name) <+> colon <> colon <+> text (typeHaskellType (e ^. typ))
+      [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> colon <> colon <+> text (typeHaskellType (e ^. typ))
       | e <- es ]
   , empty
   , text ("put" ++ tname) <+> colon <> colon <+> text "Putter" <+> text tname
   , text ("put" ++ tname) <+> text tname <> text "{..}" <+> equals <+> text "do"
   , indent 2 $ stack
-      [ typePutter (e ^. typ) <+> text (e ^. name)
+      [ typePutter (e ^. typ) <+> text (Cidl.Utils.snakeToCamel $ e ^. name)
       | e <- es ]
   , empty
   , text ("get" ++ tname) <+> colon <> colon <+> text "Get" <+> text tname
   , text ("get" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
-      [ text (e ^. name) <+> text "<-" <+> typeGetter (e ^. typ)
+      [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> text "<-" <+> typeGetter (e ^. typ)
       | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
   , empty
@@ -148,7 +151,7 @@ typeDecl t@(RecordType _ es) = stack
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
-      [ text (e ^. name) <+> text "<- Q.arbitrary"
+      [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> text "<- Q.arbitrary"
       | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
   , empty
