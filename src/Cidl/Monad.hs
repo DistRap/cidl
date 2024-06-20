@@ -7,7 +7,7 @@ module Cidl.Monad where
 
 import MonadLib
 import Data.Default.Class (Default(def))
-import Control.Lens ((.~), (%~), (&))
+import Control.Lens ((.~), (%~), (&), (^.))
 
 import Cidl.Types.AST
 import Cidl.Types.Base
@@ -111,7 +111,14 @@ withTypes ts = types %~ (++ts)
 
 -- | Create a dictionary entry at some address
 at :: WriterM m [Entry] => Integer -> Entry -> m ()
-at addr e = put [ (index .~ addr) e ]
+at addr e = put [ (index .~ addr) (addrForRecordFields e) ]
+  where
+    -- if this entry is a record, set the same address for sub fields
+    addrForRecordFields x =
+      case x ^. typ of
+        RecordType name' sub ->
+          typ .~ RecordType name' (map (index .~ addr) sub) $ x
+        _ -> e
 
 -- | Node identity specification
 data NodeSpec = NodeSpec
