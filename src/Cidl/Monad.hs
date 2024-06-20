@@ -37,12 +37,11 @@ field n t =
         _ -> id
       )
 
-ro, wo, rw, constant, reserved :: Entry -> Entry
+ro, wo, rw, constant :: Entry -> Entry
 ro = access .~ Read
 wo = access .~ Write
 rw = access .~ ReadWrite
 constant = access .~ Const
-reserved = access .~ Reserved
 
 defaultNum :: Integer -> Entry -> Entry
 defaultNum x = initial .~ (NumInit x)
@@ -152,7 +151,7 @@ pdoComm pdoOff pdoNum = record "pdo_comm_param"
       & defaultNum (pdoOff + 0x100 * pdoNum) -- + nodeId
   , field "transmission_type" uint8
   , field "inhibit_time" uint16
-  , field "reserved" uint8 & reserved
+  -- , field "reserved" uint8
   , field "event_timer" uint16
   ]
 

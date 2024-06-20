@@ -198,7 +198,6 @@ objdictTower d =
   attrServer Const = text "readableAttrServer"
   attrServer Write = text "writableAttrServer"
   attrServer ReadWrite = text "readwritableAttrServer"
-  attrServer Reserved = empty
   attrServers =  stack
     [     lparen
       <>  onlyReadable rw (text n <> text "_get_res" <> comma)

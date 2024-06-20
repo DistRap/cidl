@@ -16,7 +16,6 @@ data Perm
   | Write
   | ReadWrite
   | Const
-  | Reserved
   deriving (Eq, Show)
 
 readable :: Perm -> Bool

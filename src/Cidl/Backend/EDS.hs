@@ -137,7 +137,6 @@ edsBackend dicts _pkgname _namespace_raw =
   buildPerm Write = "wo"
   buildPerm ReadWrite = "rw"
   buildPerm Const = "const"
-  buildPerm Reserved = buildPerm Const
 
 data Ini =
     IniSection
