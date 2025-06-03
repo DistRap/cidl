@@ -34,8 +34,7 @@ interfaceModule modulepath dict =
     , empty
     , stack
         typeImports
-    , text "import Network.CANOpen.Class (MonadNode)"
-    , text "import Network.CANOpen.SDOClient (sdoRead, sdoWrite)"
+    , text "import Network.CANOpen.Class (MonadNode(..))"
     , text "import Network.CANOpen.Types"
     , empty
     , dictVarsAndFunctions dict
