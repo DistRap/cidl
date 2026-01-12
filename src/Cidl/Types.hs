@@ -5,7 +5,6 @@ module Cidl.Types
   , insertType
   , typeLeaves
   , childTypes
-  , sizeOf
   , basePrimType
   , typeName
   ) where
@@ -53,25 +52,6 @@ typeLeaves _ = []
 
 childTypes :: Type -> [Type]
 childTypes t = [t] ++ concat (map childTypes (typeLeaves t))
-
-sizeOf :: Type -> Integer
-sizeOf (RecordType _ es) = sum [ sizeOf (e ^. typ) | e <- es ]
-sizeOf (ArrayType _ len t) = fromIntegral len * sizeOf t
--- sus, but sizeOf is not used anywhere yet for now
-sizeOf (VarArrayType t) = sizeOf t
-sizeOf (PrimType (Newtype _ tr)) = sizeOf (PrimType tr)
-sizeOf (PrimType (EnumType _ bs _)) = bitsSize bs
-sizeOf (PrimType (AtomType AtomBool)) = bitsSize Bits8
-sizeOf (PrimType (AtomType (AtomInt bs))) = bitsSize bs
-sizeOf (PrimType (AtomType (AtomWord bs))) = bitsSize bs
-sizeOf (PrimType (AtomType AtomFloat)) = 4
-sizeOf (PrimType (AtomType AtomDouble)) = 8
-
-bitsSize :: Bits -> Integer
-bitsSize Bits8  = 1
-bitsSize Bits16 = 2
-bitsSize Bits32 = 4
-bitsSize Bits64 = 8
 
 -- Reduce a newtype to the innermost concrete type
 basePrimType :: PrimType -> PrimType
