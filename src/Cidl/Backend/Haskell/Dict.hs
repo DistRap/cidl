@@ -34,8 +34,7 @@ interfaceModule modulepath dict =
     , empty
     , stack
         typeImports
-    , text "import Network.CANOpen.Class (MonadNode)"
-    , text "import Network.CANOpen.SDOClient (sdoRead, sdoWrite)"
+    , text "import Network.CANOpen.API (CNode(..))"
     , text "import Network.CANOpen.Types"
     , empty
     , dictVarsAndFunctions dict
@@ -159,7 +158,7 @@ buildPerm p =
      text "Permission_"
   <> text (show p)
 
--- | sdoRead/write alias
+-- | cNodeSDORead/Write alias
 alias
   :: Entry
   -> Doc
@@ -173,15 +172,13 @@ alias Entry{..} =
         then stack
           [     text "read"
             <>  text capName
-            <+> text "::"
-            <+> text "MonadNode m"
-            <+> text "=>"
-            <+> text "m"
+            <+> text ":: CNode m -> m"
             <+> text (typeHaskellType entryTyp)
           ,     text "read"
             <>  text capName
+            <+> text "cn"
             <+> text "="
-            <+> text "sdoRead"
+            <+> text "cNodeSDORead cn"
             <+> text camelName
           ]
         else empty
@@ -189,23 +186,22 @@ alias Entry{..} =
         then stack
           [     text "write"
             <>  text capName
-            <+> text "::"
-            <+> text "MonadNode m"
-            <+> text "=>"
+            <+> text ":: CNode m ->"
             <+> text (typeHaskellType entryTyp)
             <+> text "->"
             <+> text "m ()"
           ,     text "write"
             <>  text capName
+            <+> text "cn"
             <+> text "="
-            <+> text "sdoWrite"
+            <+> text "cNodeSDOWrite cn"
             <+> text camelName
           ]
 
         else empty
       ]
 
--- | sdoRead/Write aliases for complex types
+-- | cNodeSDORead/Write aliases for complex types
 -- Generated iff all fields are readable/writeable
 complexAliases
   :: Entry
@@ -224,24 +220,25 @@ complexAliases e =
             [     text "read"
               <>  text capName
               <+> text "::"
-              <+> text "MonadNode m"
-              <+> text "=>"
+              <+> text "Monad m => CNode m"
+              <+> text "->"
               <+> text "m"
               <+> text (typeHaskellType (entryTyp e))
             ,     text "read"
               <>  text capName
-              <+> text "= do"
+              <+> text "cn = do"
             , indent 2
                 $ stack
                   [     text (Cidl.Utils.snakeToCamel $ entryName s)
                     <+> text "<-"
-                    <>  text
+                    <+> text
                           (Cidl.Utils.snakeToCamel
                             $  "read_"
                             <> entryName e
                             <> "_"
                             <> entryName s
                           )
+                    <+> text "cn"
                   | s <- subEntries
                   , entryAccess s `elem` [Read, ReadWrite]
                   ]
@@ -256,13 +253,14 @@ complexAliases e =
             [     text "write"
               <>  text capName
               <+> text "::"
-              <+> text "MonadNode m"
-              <+> text "=>"
+              <+> text "Monad m => CNode m"
+              <+> text "->"
               <+> text (typeHaskellType (entryTyp e))
               <+> text "->"
               <+> text "m ()"
             ,     text "write"
               <>  text capName
+              <+> text "cn"
               <+> text (typeHaskellType (entryTyp e))
               <>  text "{..}"
               <+> text "= do"
@@ -275,6 +273,7 @@ complexAliases e =
                             <> "_"
                             <> entryName s
                           )
+                    <+> text "cn"
                     <+> text (Cidl.Utils.snakeToCamel $ entryName s)
                   | s <- subEntries
                   , entryAccess s `elem` [Read, ReadWrite]
