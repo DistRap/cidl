@@ -45,19 +45,19 @@ dictModule modulepath d =
     , text "{-# LANGUAGE RecordWildCards #-}"
     , text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
     , text "{-# OPTIONS_GHC -fno-warn-unused-matches #-}"
-    , empty
+    , softbreak
     , text "module"
       <+> im "Dict"
       <+> text "where"
-    , empty
+    , softbreak
     , stack imports
-    , empty
+    , softbreak
     , attrsDataType d
-    , empty
+    , softbreak
     , attrsTowerConstructor d
-    , empty
+    , softbreak
     , attrsInitializer d
-    , empty
+    , softbreak
     , objdictTower d
     ]
   where
@@ -350,11 +350,11 @@ objdictTower d =
           text "refCopy getmux" <+> callbackVar (text "mux")
         , text "address <- getmux ~>* addr"
         , text "subindex <- getmux ~>* sub"
-        , empty
+        , softbreak
         , text "getres <- local $ izero"
         , text "store (getres ~> getres_ok) true"
         , emitGetErrFun
-        , empty
+        , softbreak
         , text "cond_"
         , indent 2 $ encloseStack lbracket rbracket comma $ getConds
         ]
@@ -482,14 +482,14 @@ objdictTower d =
           text "refCopy setmux" <+> callbackVar (text "muxpack")
         , text "address <- setmux ~> mp_mux ~>* addr"
         , text "subindex <- setmux ~> mp_mux ~>* sub"
-        , empty
+        , softbreak
         , text "setres <- local $ izero"
         , text "store (setres ~> setres_ok) true"
         , text "refCopy (setres ~> setres_mux) (setmux ~> mp_mux)"
         , text "let emitError x = store (setres ~> setres_ok) false"
           <+> text ">> store (setres ~> setres_error) x"
           <+> text ">> emit" <+> emitterName (setter_result) <+> parens (text "constRef setres")
-        , empty
+        , softbreak
         , text "cond_"
         , indent 2 $ encloseStack lbracket rbracket comma $ setConds
         ]
@@ -507,7 +507,7 @@ objdictTower d =
       ])
 
   monitor = text "monitor" <+> dquotes (text "objDictMon") <+> text "$ do"
-  monitorBody = indent 2 $ stack $ intersperse empty [
+  monitorBody = indent 2 $ stack $ intersperse softbreak [
       stack mirrors
     , text "getmux <- state" <+> dquotes (text "getmux")
     , text "setmux <- state" <+> dquotes (text "setmux")
@@ -518,7 +518,7 @@ objdictTower d =
     , initHandler
     ]
   --ifc = text $ show $ interfaceMethods i
-  body = stack $ intersperse empty [
+  body = stack $ intersperse softbreak [
       stack ifaceChans
     , attrChans
     , attrServers

@@ -27,16 +27,15 @@ interfaceModule modulepath dict =
     , text "{-# LANGUAGE FlexibleContexts #-}"
     , text "{-# LANGUAGE RecordWildCards #-}"
     , text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
-    , empty
+    , softbreak
     , text "module"
       <+> im (dictModuleName dict)
       <+> text "where"
-    , empty
+    , softbreak
     , stack
         typeImports
     , text "import Network.CANOpen.API (CNode(..))"
     , text "import Network.CANOpen.Types"
-    , empty
     , dictVarsAndFunctions dict
     ]
   where
@@ -69,7 +68,7 @@ dictVarsAndFunctions
 dictVarsAndFunctions dict =
   stack
     [     variables entry
-      </> complexAliases entry
+      <//> complexAliases entry
     | entry <- Cidl.Dict.allEntries dict ]
 
 variable
@@ -82,7 +81,8 @@ variable e@Entry{..} mSub =
     capName = Cidl.Utils.firstCap camelName
   in
     stack
-    [     text camelName
+    [ softbreak
+    ,     text camelName
       <+> text ":: Variable"
       <+> text (typeHaskellType entryTyp)
     ,     text camelName
@@ -105,6 +105,7 @@ variable e@Entry{..} mSub =
               <+> equals
               <+> buildPerm entryAccess
             ]
+    , softbreak
     , alias e
     ]
 
@@ -182,6 +183,7 @@ alias Entry{..} =
             <+> text camelName
           ]
         else empty
+      , softbreak
       , if (entryAccess `elem` [Write, ReadWrite])
         then stack
           [     text "write"
@@ -215,7 +217,8 @@ complexAliases e =
     PrimType _primType -> empty
     RecordType _recordName subEntries ->
       stack
-        [ if all (\s -> entryAccess s `elem` [Read, ReadWrite]) subEntries
+        [ softbreak
+        , if all (\s -> entryAccess s `elem` [Read, ReadWrite]) subEntries
           then stack
             [     text "read"
               <>  text capName
@@ -248,6 +251,7 @@ complexAliases e =
                 <>  text "{..}"
             ]
           else empty
+        , softbreak
         , if all (\s -> entryAccess s `elem` [Write, ReadWrite]) subEntries
           then stack
             [     text "write"

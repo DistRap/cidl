@@ -23,11 +23,11 @@ typeModule useAeson modulepath t =
     [ text "{-# LANGUAGE RecordWildCards #-}"
     , text "{-# LANGUAGE DeriveDataTypeable #-}"
     , text "{-# LANGUAGE DeriveGeneric #-}"
-    , empty
+    , softbreak
     , text "module"
       <+> tm (typeModuleName t)
       <+> text "where"
-    , empty
+    , softbreak
     , stack (imports ++
               [ text "import Data.Aeson (ToJSON,FromJSON)" | useAeson ] ++
               [ text "import Data.Serialize"
@@ -37,7 +37,7 @@ typeModule useAeson modulepath t =
               , text "import Network.CANOpen.Serialize (CSerialize(..))"
               , text "import qualified Test.QuickCheck as Q"
               ])
-    , empty
+    , softbreak
     , typeDecl t
     ] ++
     [ toJSONInstance   (typeModuleName t) | useAeson ] ++
@@ -131,30 +131,30 @@ typeDecl t@(RecordType _ es) =
   , indent 4 $ encloseStack lbrace (rbrace <+> deriv) comma
       [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> colon <> colon <+> text (typeHaskellType (e ^. typ))
       | e <- es ]
-  , empty
+  , softbreak
   , text ("put" ++ tname) <+> colon <> colon <+> text "Putter" <+> text tname
   , text ("put" ++ tname) <+> text tname <> text "{..}" <+> equals <+> text "do"
   , indent 2 $ stack
       [ typePutter (e ^. typ) <+> text (Cidl.Utils.snakeToCamel $ e ^. name)
       | e <- es ]
-  , empty
+  , softbreak
   , text ("get" ++ tname) <+> colon <> colon <+> text "Get" <+> text tname
   , text ("get" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
       [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> text "<-" <+> typeGetter (e ^. typ)
       | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
-  , empty
+  , softbreak
   , serializeInstance "Serialize" tname
   , serializeInstance "CSerialize" tname
-  , empty
+  , softbreak
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
       [ text (Cidl.Utils.snakeToCamel $ e ^. name) <+> text "<- Q.arbitrary"
       | e <- es ] ++
       [ text "return" <+> text tname <> text "{..}" ]
-  , empty
+  , softbreak
   , arbitraryInstance tname
   ]
   where
@@ -176,26 +176,26 @@ typeDecl t@(PrimType (Newtype _ n)) = stack
         (lbrace <+> text ("un" ++ tname) <+> text "::" <+>
          text (typeHaskellType (PrimType n)) </>
          rbrace <+> typeDeriving ["Eq", "Show", "Data", "Typeable", "Generic"])
-  , empty
+  , softbreak
   , text ("put" ++ tname) <+> colon <> colon <+> text "Putter" <+> text tname
   , text ("put" ++ tname) <+> parens (text tname <+> text "a") <+> equals
       <+> primTypePutter n <+> text "a"
-  , empty
+  , softbreak
   , text ("get" ++ tname) <+> colon <> colon <+> text "Get" <+> text tname
   , text ("get" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
       [ text "a <-" <+> primTypeGetter n
       , text "return" <+> parens (text tname <+> text "a") ]
-  , empty
+  , softbreak
   , serializeInstance "Serialize" tname
   , serializeInstance "CSerialize" tname
-  , empty
+  , softbreak
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack $
       [ text "a" <+> text "<- Q.arbitrary"
       , text "return" <+> parens (text tname <+> text "a") ]
-  , empty
+  , softbreak
   , arbitraryInstance tname
   ]
   where
@@ -206,7 +206,7 @@ typeDecl t@(PrimType (EnumType _ s es)) = stack
   , indent 2 $ encloseStack equals deriv (text "|")
       [ text (userTypeModuleName i)
       | (i, _) <- es ]
-  , empty
+  , softbreak
   , text "instance Enum" <+> text tname <+> text "where"
   , indent 2 $ stack $
       [ text "toEnum" <+> ppr e <+> equals <+> text (userTypeModuleName i)
@@ -214,13 +214,13 @@ typeDecl t@(PrimType (EnumType _ s es)) = stack
       [ text ("toEnum _ = error \"toEnum: invalid value for " ++ tname ++ "\"") ] ++
       [ text "fromEnum" <+> text (userTypeModuleName i) <+> equals <+> ppr e
       | (i,e) <- es ]
-  , empty
+  , softbreak
   , text ("put" ++ tname) <+> colon <> colon <+> text "Putter" <+> text tname
   , stack
       [ text ("put" ++ tname) <+> text (userTypeModuleName i) <+> equals <+> 
           primTypePutter (sizedPrim s) <+> ppr e
       | (i,e) <- es ]
-  , empty
+  , softbreak
   , text ("get" ++ tname) <+> colon <> colon <+> text "Get" <+> text tname
   , text ("get" ++ tname) <+> equals <+> text "do"
   , indent 2 $ stack
@@ -231,15 +231,15 @@ typeDecl t@(PrimType (EnumType _ s es)) = stack
           | (i,e) <- es
           ] ++ [text "_ -> fail \"invalid value in get"  <> text tname <> text"\"" ]
       ]
-  , empty
+  , softbreak
   , serializeInstance "Serialize" tname
   , serializeInstance "CSerialize" tname
-  , empty
+  , softbreak
   , text ("arbitrary" ++ tname) <+> colon <> colon <+> text "Q.Gen" <+> text tname
   , text ("arbitrary" ++ tname) <+> equals
   , indent 2 $ text "Q.elements" <+> encloseStack lbracket rbracket comma
                                       [ text (userTypeModuleName i) | (i,_e) <- es ]
-  , empty
+  , softbreak
   , arbitraryInstance tname
   ]
   where

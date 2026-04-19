@@ -19,18 +19,18 @@ typeUmbrella modulepath ts =
   stack $
     [ text "{-# OPTIONS_GHC -fno-warn-unused-imports #-}"
     , text "module" <+> typeModulePath modulepath "Types" <+> text "where"
-    , empty
+    , softbreak
     , text "import Ivory.Language"
     , text "import Ivory.Tower"
     , stack
         [ importDecl (typeModulePath (modulepath ++ ["Types"])) (importType t)
         | t <- ts ]
-    , empty
+    , softbreak
     , text "typeModules :: [Module]"
     ]
     ++ maybeTypeModules
     ++
-    [ empty
+    [ softbreak
     , text "towerDeps :: Tower e ()"
     , text "towerDeps = do"
     , text "  mapM_ towerModule typeModules"
@@ -80,16 +80,16 @@ typeModule modulepath t =
     , text "{-# LANGUAGE GeneralizedNewtypeDeriving #-}"
     , text "{-# LANGUAGE FlexibleInstances #-}"
     , text "{-# OPTIONS_GHC -fno-warn-orphans #-}"
-    , empty
+    , softbreak
     , text "module"
       <+> typeModulePath modulepath (typeModuleName t)
       <+> text "where"
-    , empty
+    , softbreak
     , stack (imports ++
               [ text "import Ivory.Language"
               , emptyWhen (isArray t) (text "import Ivory.Serialize")
               ])
-    , empty
+    , softbreak
     , typeDecl t
     ]
   where
@@ -199,16 +199,16 @@ typeDecl t@(RecordType tname es) = stack
        <+> typeIvoryAreaStructQQ (e ^. typ)
       | e <- es ]
   , text "|]"
-  , empty
+  , softbreak
   , packRep <+> colon <> colon <+> text "WrappedPackRep" <+> storedType
   , packRep <+> equals <+> text "wrapPackRep" <+> dquotes structname <+> text "$"
   , indent 2 $ text "packStruct" <+> encloseStack lbracket rbracket comma
                 [ text "packLabel" <+> text (e ^. name)
                 | e <- es]
-  , empty
+  , softbreak
   , text "instance Packable" <+> storedType <+> text "where"
   , indent 2 $ text "packRep" <+> equals <+> text "wrappedPackRep" <+> packRep
-  , empty
+  , softbreak
   , text (ivoryPackageName t) <+> text ":: Module"
   , text (ivoryPackageName t) <+> equals
     <+> text "package" <+> dquotes (structname <> text "_types") <+> text "$ do"
@@ -249,14 +249,14 @@ typeDecl t@(PrimType (Newtype tname n)) = stack
        <+> text (typeImportedIvoryType (PrimType n))
        </> rbrace <+> typeDeriving (words ("IvoryType IvoryVar IvoryExpr " ++
                        "IvoryEq IvoryStore IvoryInit IvoryZeroVal Num")))
-  , empty
+  , softbreak
   , packRep <+> colon <> colon <+> text "WrappedPackRep" <+> storedType
   , packRep <+> equals <+> text "wrapPackRep" <+> dquotes (text tname) <+> text "$"
   , indent 2 $ text "repackV" <+> text typename <+> text ("un" ++ typename) <+> text "packRep"
-  , empty
+  , softbreak
   , text "instance Packable" <+> storedType <+> text "where"
   , indent 2 $ text "packRep" <+> equals <+> text "wrappedPackRep" <+> packRep
-  , empty
+  , softbreak
   , text (ivoryPackageName t) <+> text ":: Module"
   , text (ivoryPackageName t) <+> equals
     <+> text "package"
@@ -283,22 +283,22 @@ typeDecl t@(PrimType (EnumType tname s es)) = stack
          text bt </>
          rbrace <+> typeDeriving (words ("IvoryType IvoryVar IvoryExpr IvoryEq "
                                    ++ "IvoryStore IvoryInit IvoryZeroVal")))
-  , empty
+  , softbreak
   , stack
       [ stack
-        [ empty
+        [ softbreak
         , text (userEnumValueName i) <+> colon <> colon <+> text typename
         , text (userEnumValueName i) <+> equals <+> text typename <+> ppr e
         ]
       | (i,e) <- es ]
-  , empty
+  , softbreak
   , packRep <+> colon <> colon <+> text "WrappedPackRep" <+> storedType
   , packRep <+> equals <+> text "wrapPackRep" <+> dquotes (text tname) <+> text "$"
   , indent 2 $ text "repackV" <+> text typename <+> text ("un" ++ typename) <+> text "packRep"
-  , empty
+  , softbreak
   , text "instance Packable" <+> storedType <+> text "where"
   , indent 2 $ text "packRep" <+> equals <+> text "wrappedPackRep" <+> packRep
-  , empty
+  , softbreak
   , text (ivoryPackageName t) <+> text ":: Module"
   , text (ivoryPackageName t) <+> equals
     <+> text "package"
